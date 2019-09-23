@@ -20,6 +20,8 @@
 
 ## Reste à faire:
 
+- dernier graphique des flux de patient à mettre en place (journées selon type d'autorisation) à faire par regroupement et non par urm
+- refaire le calcul du gisement en calculant la recette theorique ainsi: propghS_giac*nbr_ghS*tarif_ghS (tarifs année n) pour produire un tableau avec 1) difference due aux tarifs, 2) difference avec la recette theorique, et 3) le reste <=> effet casemix (cad hors tarifs et hors variation de niveaux par racine). Produire aussi une table avec effet tarifs et recette theorique par racine.
 - changer referime en nomensland pour accès externe
 - 2eme et 3eme sunburst à mettre par regroupement comme le 1er
 - verifier les top GHM des parcours 

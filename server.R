@@ -125,7 +125,7 @@ function(input, output, session) {
       incProgress(0.1, detail = paste("création des variables"))
       
       # objet giacimento
-      giacimentoload <<- rsa_nonconsol %>% dplyr::mutate(racine=substr(ghm, 1, 5), severite=substr(ghm, 6, 6)) %>% dplyr::select(nas, ghm, racine, severite, rec_base)
+      # giacimentoload <<- rsa_nonconsol %>% dplyr::mutate(racine=substr(ghm, 1, 5), severite=substr(ghm, 6, 6)) %>% dplyr::select(nas, ghm, racine, severite, rec_base)
 
       #mutate rums and rsa
       # ICI trop de lignes en sortie: rsa <- rsa_bckp %>% dplyr::filter(ansor>=anno-2) %>% dplyr::mutate(ghs=noghs) %>% dplyr::left_join(., dms1, suffix=c('','_temp'), by=c('ghs', 'anseqta', 'rsavclass')) %>% dplyr::select(-ghm_temp, -ghs) %>% dplyr::left_join(., dms2, suffix=c('', '_temp'), by=c('ghm', 'anseqta', 'rsavclass')) %>% dplyr::mutate(dms_n=ifelse(is.na(dms_n), dms_n_temp, dms_n), borne_basse=ifelse(is.na(borne_basse), borne_basse_temp, borne_basse), borne_haute=ifelse(is.na(borne_haute), borne_haute_temp, borne_haute), ip=duree/dms_n, racine=paste0(rsacmd, rsatype, rsanum)) %>% dplyr::select(-dms_n_temp, -borne_basse_temp, -borne_haute_temp) %>% dplyr::left_join(., reg2)
@@ -140,7 +140,8 @@ function(input, output, session) {
       
       updateSelectizeInput(session, 'uma', choices = structures, server = TRUE)
       
-      save(anno, mese, anonconsol, mnonconsol, pmctmono, diagnostics, giacimentoload, rsaload, rumload, structures, tarifs, score, file = 'temp/servyce.Rdata')
+      # save(anno, mese, anonconsol, mnonconsol, pmctmono, diagnostics, giacimentoload, rsaload, rumload, structures, tarifs, score, file = 'temp/servyce.Rdata')
+      save(anno, mese, anonconsol, mnonconsol, pmctmono, diagnostics, rsaload, rumload, structures, tarifs, score, file = 'temp/servyce.Rdata')
       
     } )
   } )
@@ -159,7 +160,7 @@ function(input, output, session) {
         mnonconsol <<- mnonconsol
         rumload <<- rumload 
         rsaload <<- rsaload 
-        giacimentoload <<- giacimentoload 
+        # giacimentoload <<- giacimentoload 
         tarifs <<- tarifs 
         pmctmono <<- pmctmono 
         diagnostics <<- diagnostics
@@ -197,7 +198,8 @@ function(input, output, session) {
       
       score <<- 1
 
-      save(anno, mese, anonconsol, mnonconsol, pmctmono, diagnostics, giacimentoload, rsaload, rumload, structures, tarifs, score, file = 'temp/servyce.Rdata')
+      # save(anno, mese, anonconsol, mnonconsol, pmctmono, diagnostics, giacimentoload, rsaload, rumload, structures, tarifs, score, file = 'temp/servyce.Rdata')
+      save(anno, mese, anonconsol, mnonconsol, pmctmono, diagnostics, rsaload, rumload, structures, tarifs, score, file = 'temp/servyce.Rdata')
       
       } else {NULL}
     })
@@ -220,9 +222,9 @@ function(input, output, session) {
         naselect <<- rumload %>% dplyr::filter(uma_locale2 %in% unita, str_detect(cdghm, input$ghmfilt1), !str_detect(cdghm, input$ghmfilt2)) %>% dplyr::select(nas)
       }
 
-      giacimento1 <- giacimentoload %>% dplyr::filter(nas %in% naselect$nas) %>% dplyr::group_by(racine) %>% dplyr::mutate(nrac_giac=length(ghm), recrac_giac=sum(rec_base)) %>% dplyr::group_by(ghm) %>% dplyr::mutate(nghm_giac=length(ghm), recghm_giac=sum(rec_base)) %>% dplyr::select(-nas) %>% dplyr::distinct(ghm, nrac_giac, nghm_giac, recrac_giac, recghm_giac) %>% dplyr::mutate(propghm_giac=nghm_giac/nrac_giac, proprec_giac=recghm_giac/recrac_giac) 
-      giacimento2 <- rsaload %>% dplyr::filter(nas %in% naselect$nas, ansor==anno) %>% dplyr::group_by(racine) %>% dplyr::mutate(nrac=length(ghm), recrac=sum(rec_base)) %>% dplyr::group_by(ghm) %>% dplyr::mutate(nghm=length(ghm), recghm=sum(rec_base)) %>% dplyr::select(-nas) %>% dplyr::distinct(ghm, nrac, nghm, recrac, recghm) %>% dplyr::mutate(propghm=nghm/nrac, proprec=recghm/recrac)
-      giacimento <<- dplyr::left_join(giacimento2, giacimento1) %>% dplyr::mutate(theoriq=ifelse(is.na(proprec_giac), recghm, proprec_giac*recrac), diff=ifelse(is.na(proprec_giac), 0, recghm-proprec_giac*recrac))
+      # giacimento1 <- giacimentoload %>% dplyr::filter(nas %in% naselect$nas) %>% dplyr::group_by(racine) %>% dplyr::mutate(nrac_giac=length(ghm), recrac_giac=sum(rec_base)) %>% dplyr::group_by(ghm) %>% dplyr::mutate(nghm_giac=length(ghm), recghm_giac=sum(rec_base)) %>% dplyr::select(-nas) %>% dplyr::distinct(ghm, nrac_giac, nghm_giac, recrac_giac, recghm_giac) %>% dplyr::mutate(propghm_giac=nghm_giac/nrac_giac, proprec_giac=recghm_giac/recrac_giac) 
+      # giacimento2 <- rsaload %>% dplyr::filter(nas %in% naselect$nas, ansor==anno) %>% dplyr::group_by(racine) %>% dplyr::mutate(nrac=length(ghm), recrac=sum(rec_base)) %>% dplyr::group_by(ghm) %>% dplyr::mutate(nghm=length(ghm), recghm=sum(rec_base)) %>% dplyr::select(-nas) %>% dplyr::distinct(ghm, nrac, nghm, recrac, recghm) %>% dplyr::mutate(propghm=nghm/nrac, proprec=recghm/recrac)
+      # giacimento <<- dplyr::left_join(giacimento2, giacimento1) %>% dplyr::mutate(theoriq=ifelse(is.na(proprec_giac), recghm, proprec_giac*recrac), diff=ifelse(is.na(proprec_giac), 0, recghm-proprec_giac*recrac))
 
       incProgress(0.4, detail = paste("finalisation"))
       
@@ -230,6 +232,28 @@ function(input, output, session) {
       rsa <<- rsaload %>% dplyr::filter(nas %in% naselect$nas)
       
       output$listuma <- renderText({paste0("Calcul ok pour ", unitemed, "à M", mese, " de ", anno, " avec GHM inclus = ", input$ghmfilt1, " et GHM exclus = ", input$ghmfilt2)})
+      
+      #Calcul objet incluant recettes théoriques (par racines)
+      
+      giac1 <- dplyr::filter(rum, as.numeric(moissor_sej)<=mese, as.numeric(ansor_sej)==anno-1, LIBUM %in% unitemed) %>%
+        dplyr::group_by(nas) %>% dplyr::summarise(ghm=first(cdghm), coefpmctmonotime1=sum(coefpmctmonotime1), valopmctmonotime1=sum(valopmctmonotime1), valopmctmonotime1_nonconsol=sum(valopmctmonotime1_nonconsol), rec_sup_repa=sum(rec_sup_repa)) %>% dplyr::ungroup(.) %>%
+        dplyr::left_join(.,  dplyr::left_join(rsa %>% dplyr::mutate(rec_exbh=rec_exh+rec_exb) %>% dplyr::select(nas, ghs=noghs, rec_base, rec_exbh), dplyr::filter(tarifs, anseqta==as.character(anno)) %>% dplyr::select(ghs, tarif_base) ) ) %>% dplyr::mutate(racine=substr(ghm, 1, 5), valo_base=coefpmctmonotime1*rec_base, valo_exbh=coefpmctmonotime1*rec_exbh, diffconsol=valopmctmonotime1-valopmctmonotime1_nonconsol) %>%
+        dplyr::group_by(racine) %>%
+        dplyr::mutate(nrac=length(ghs), recrac_consol=sum(valo_base), recrac_exbh_consol=sum(valo_exbh), recrac_diffconsol=sum(diffconsol), recracsupconsol=sum(rec_sup_repa)) %>%
+        dplyr::group_by(ghs) %>%
+        dplyr::mutate(nghs=length(ghs), repanum=length(ghs)/nrac*tarif_base) %>% 
+        ungroup(.) %>%
+        dplyr::distinct(ghm, ghs, .keep_all=TRUE) %>%
+        dplyr::group_by(racine) %>%
+        dplyr::summarise(repanum_rac=sum(repanum), nrac_consol=first(nrac), recrac_consol=first(recrac_consol), recrac_exbh_consol=first(recrac_exbh_consol), evol_consol=first(recrac_diffconsol), recracsup_consol=first(recracsupconsol))
+      
+      giac2 <- dplyr::left_join(dplyr::filter(rum, ansor_sej==anno, LIBUM %in% unitemed) %>% dplyr::group_by(nas) %>% dplyr::summarise(ghm=first(cdghm), coefpmctmonotime1=sum(coefpmctmonotime1), valopmctmonotime1=sum(valopmctmonotime1), valopmctmonotime1_tarifsante=sum(valopmctmonotime1_tarifsante), rec_sup_repa=sum(rec_sup_repa)) %>% dplyr::ungroup(.), rsa  %>% dplyr::mutate(rec_exbh=rec_exh+rec_exb) %>% dplyr::select(nas, ghs=noghs, rec_base, rec_exbh) ) %>% 
+        dplyr::mutate(racine=substr(ghm, 1, 5), valo_base=coefpmctmonotime1*rec_base, valo_exbh=coefpmctmonotime1*rec_exbh, difftarifsante=valopmctmonotime1_tarifsante-valopmctmonotime1) %>% dplyr::group_by(racine) %>%
+        dplyr::summarise(nrac=sum(coefpmctmonotime1), nracreel=length(ghs), recrac=sum(valo_base), recrac_exbh=sum(valo_exbh), recrac_difftarifsante=sum(difftarifsante), recracsup=sum(rec_sup_repa)) %>% ungroup(.)
+      
+      giac <<- dplyr::full_join(giac1, giac2) %>%
+        dplyr::mutate_at(., vars(repanum_rac, nrac_consol, recrac_consol, recrac_exbh_consol, evol_consol, recracsup_consol), ~ifelse(is.na(.), 0, .)) %>%  
+        dplyr::mutate(theoriq_num=repanum_rac*nrac, diff_rec=(recrac+recrac_exbh+recracsup)-(recrac_consol+recrac_exbh_consol+recracsup_consol), diff_rec_base=recrac-recrac_consol, diff_rec_exbh=recrac_exbh-recrac_exbh_consol, diff_rec_supp=recracsup-recracsup_consol, diff_tarifsante=recrac_difftarifsante, diff_consol=evol_consol, diff_theoriq=recrac-theoriq_num, diff_reste=diff_rec_base+diff_rec_exbh+diff_rec_supp+diff_tarifsante+diff_theoriq)
       
     })
   } )
@@ -337,21 +361,28 @@ function(input, output, session) {
     
     if(input$menuchoice=="valoglob") {
       
-      output$valo0 <- renderPlotly({
-        temp1 <- giacimento %>% dplyr::group_by(severite=substr(ghm, 6, 6)) %>% dplyr::summarise(diff=sum(diff), recghm=sum(recghm), theoriq=sum(theoriq), activ=sum(nghm), activante=sum(nghm_giac, na.rm=TRUE))
-        p1 <- plot_ly(data=temp1, x = ~recghm, y = ~severite, name = 'recettes réelles', type = 'bar', orientation = 'h', color = 'rgb(205, 12, 24)') %>%
-          add_trace(x = ~theoriq, name = 'recettes théoriques (% sev./rac. année préc.)', color = 'rgb(22, 96, 167)') 
-        p2 <- plot_ly(type = 'scatter', mode = 'lines+markers', data=temp1, x=~activ, y=~severite, name="activité année en cours", color = 'rgb(205, 12, 24)') %>%
-          add_trace(x = ~activante, name = 'activité année précédente', color = 'rgb(22, 96, 167)')  
-        subplot(p1, p2) %>% layout(title='Répartition des recettes (€) et nombre de séjours')
+      # output$valo0 <- renderPlotly({
+      #   temp1 <- giacimento %>% dplyr::group_by(severite=substr(ghm, 6, 6)) %>% dplyr::summarise(diff=sum(diff), recghm=sum(recghm), theoriq=sum(theoriq), activ=sum(nghm), activante=sum(nghm_giac, na.rm=TRUE))
+      #   p1 <- plot_ly(data=temp1, x = ~recghm, y = ~severite, name = 'recettes réelles', type = 'bar', orientation = 'h', color = 'rgb(205, 12, 24)') %>%
+      #     add_trace(x = ~theoriq, name = 'recettes théoriques (% sev./rac. année préc.)', color = 'rgb(22, 96, 167)') 
+      #   p2 <- plot_ly(type = 'scatter', mode = 'lines+markers', data=temp1, x=~activ, y=~severite, name="activité année en cours", color = 'rgb(205, 12, 24)') %>%
+      #     add_trace(x = ~activante, name = 'activité année précédente', color = 'rgb(22, 96, 167)')  
+      #   subplot(p1, p2) %>% layout(title='Répartition des recettes (€) et nombre de séjours')
+      #   
+      # })
+      
+      output$valo0 <- DT::renderDT( {
         
-      })
+        rsa %>% dplyr::filter(as.numeric(moissor)<=mese, as.numeric(ansor)>=anno-1)  %>% dplyr::summarise("Nbr de séjours annee n"=n_distinct(nas[ansor==anno]), "Séjours monorums n"=n_distinct(nas[nbrum==1 & ansor==anno]), "Valorisation GHS total annee n"=sum(rec_totale[ansor==anno]), "Valorisation monorum n"=sum(rec_totale[nbrum==1 & ansor==anno]), "Nbr de séjours annee n-1"=n_distinct(nas[ansor==anno-1]), "Séjours monorums n-1"=n_distinct(nas[nbrum==1 & ansor==anno-1]), "Valorisation GHS total annee n-1"=sum(rec_totale[ansor==anno-1]), "Valorisation monorum n-1"=sum(rec_totale[nbrum==1 & ansor==anno-1]), "IP moyen n"=mean(ip[ansor==anno], na.rm=TRUE), "IP moyen n-1"=mean(ip[ansor==anno-1], na.rm=TRUE)) %>% dplyr::mutate_at(vars(2:8), ~round(., 0)) %>% dplyr::mutate_at(vars9:(10), ~round(., 3))
+        
+      }, caption="Valorisation globale des séjours passés par l'unité, par an", rownames=FALSE, extensions = 'Buttons', filter = 'top', options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel')))
+      
       
       output$valo1 <- DT::renderDT( {
         
-        rsa %>% dplyr::filter(as.numeric(moissor)<=mese, as.numeric(ansor)>=anno-1) %>% dplyr::group_by("Mois de sortie"=moissor) %>% dplyr::summarise("Nbr de séjours annee n"=n_distinct(nas[ansor==anno]), "Séjours monorums n"=n_distinct(nas[nbrum==1 & ansor==anno]), "Valorisation GHS total annee n"=sum(rec_totale[ansor==anno]),"Valorisation monorum n"=sum(rec_totale[nbrum==1 & ansor==anno]), "Nbr de séjours annee n-1"=n_distinct(nas[ansor==anno-1]), "Séjours monorums n-1"=n_distinct(nas[nbrum==1 & ansor==anno-1]), "Valorisation GHS total annee n-1"=sum(rec_totale[ansor==anno-1]),"Valorisation monorum n-1"=sum(rec_totale[nbrum==1 & ansor==anno-1]), "IP moyen"=mean(ip, na.rm=TRUE)) %>% dplyr::mutate_at(vars(2:9), ~round(., 0)) %>% dplyr::mutate_at(vars(10), ~round(., 3))
+        rsa %>% dplyr::filter(as.numeric(moissor)<=mese, as.numeric(ansor)>=anno-1) %>% dplyr::group_by("Mois de sortie"=moissor) %>% dplyr::summarise("Nbr de séjours annee n"=n_distinct(nas[ansor==anno]), "Séjours monorums n"=n_distinct(nas[nbrum==1 & ansor==anno]), "Valorisation GHS total annee n"=sum(rec_totale[ansor==anno]), "Valorisation monorum n"=sum(rec_totale[nbrum==1 & ansor==anno]), "Nbr de séjours annee n-1"=n_distinct(nas[ansor==anno-1]), "Séjours monorums n-1"=n_distinct(nas[nbrum==1 & ansor==anno-1]), "Valorisation GHS total annee n-1"=sum(rec_totale[ansor==anno-1]), "Valorisation monorum n-1"=sum(rec_totale[nbrum==1 & ansor==anno-1]), "IP moyen n"=mean(ip[ansor==anno], na.rm=TRUE), "IP moyen n-1"=mean(ip[ansor==anno-1], na.rm=TRUE)) %>% dplyr::mutate_at(vars(2:9), ~round(., 0)) %>% dplyr::mutate_at(vars(10:11), ~round(., 3))
         
-      }, caption="Valorisation globale des séjours passés par l'unité", rownames=FALSE, extensions = 'Buttons', filter = 'top', options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel')))
+      }, caption="Valorisation globale des séjours passés par l'unité, par mois", rownames=FALSE, extensions = 'Buttons', filter = 'top', options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel')))
       
       output$valo2 <- renderPlot({
         
@@ -656,6 +687,36 @@ function(input, output, session) {
   observeEvent(input$menuchoice, {
     
     if(input$menuchoice=="anavalo") {
+      
+      output$anavalo01 <- renderDT({
+        rum %>% dplyr::filter(LIBUM %in% unitemed, as.numeric(ansor_sej) == anno | as.numeric(ansor_sej) == anno-1, as.numeric(moissor_sej) <= mese) %>% dplyr::group_by(Année=ansor_sej) %>% dplyr::summarise("Valorisation totale"=sum(round(valopmctmonotime1,1)), "Dont valorisation suppléments"=sum(round(rec_sup_repa,1)), "Valorisation totale tarifs ant."=sum(round(valopmctmonotime1_tarifsante,1)), "Nbr journées rums"=sum(dureesejpart), "Nbr journées séjours"=sum(duree_sej), "Nbr de rums"=length(nofiness))
+        }, caption="Valorisation des rums", rownames=FALSE, extensions = 'Buttons', filter = 'top', options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel')))
+      
+      output$anavalo02 <- renderDT({
+        rum %>% dplyr::filter(LIBUM %in% unitemed, as.numeric(ansor_sej) == anno | as.numeric(ansor_sej) == anno-1, as.numeric(moissor_sej) <= mese) %>% dplyr::group_by(Année=ansor_sej, GHM=cdghm) %>% dplyr::summarise("Valorisation totale"=sum(round(valopmctmonotime1,1)), "Dont valorisation suppléments"=sum(round(rec_sup_repa,1)), "Valorisation totale tarifs ant."=sum(round(valopmctmonotime1_tarifsante,1)), "Nbr journées rums"=sum(dureesejpart), "Nbr journées séjours"=sum(duree_sej), "Nbr de rums"=length(nofiness))
+      }, caption="Valorisation des rums selon le GHM", rownames=FALSE, extensions = 'Buttons', filter = 'top', options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel')))
+      
+      output$anavalo03 <- renderDT({
+        giac %>% dplyr::select(diff_rec, diff_rec_base, diff_rec_exbh, diff_rec_supp, diff_tarifsante, diff_consol, diff_theoriq, diff_reste, nracreel, nrac_consol) %>% dplyr::summarise_all(sum, na.rm=TRUE) %>% dplyr::mutate_at(vars(1:8), ~round(., 1)) %>% dplyr::rename("Differentiel rec. globale"=diff_rec, "Differentiel rec. base"=diff_rec_base, "Differentiel rec. bornes"=diff_rec_exbh, "Differentiel rec. suppléments"=diff_rec_supp, "Differentiel tarifs"=diff_tarifsante, "Consolidation à n-1"=diff_consol, "Rec. base théorique"=diff_theoriq, "Différentiel restant"=diff_reste, "Nbr de ghs"=nracreel, "Nbr de ghs année précédente"=nrac_consol)
+      }, caption="Differentiels de recettes sur 1 an", rownames=FALSE, extensions = 'Buttons', filter = 'top', options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel')))
+      
+      temp1 <- giac %>% dplyr::group_by(cmd=substr(racine, 1, 2)) %>% dplyr::summarise(recrac=sum(recrac, na.rm=TRUE), recrac_exbh=sum(recrac_exbh, na.rm=TRUE), recracsup=sum(recracsup, na.rm=TRUE), diff_tarifsante=sum(diff_tarifsante, na.rm=TRUE), theoriq_num=sum(theoriq_num, na.rm=TRUE), recrac_consol=sum(recrac_consol, na.rm=TRUE), recrac_exbh_consol=sum(recrac_exbh_consol, na.rm=TRUE), recracsup_consol=sum(recracsup_consol, na.rm=TRUE), evol_consol=sum(evol_consol, na.rm=TRUE), nrac=sum(nracreel, na.rm=TRUE), nrac_consol=sum(nrac_consol, na.rm=TRUE))
+      
+      output$anavalo0 <- renderPlotly({
+        plotly::plot_ly(data=temp1) %>%
+          plotly::add_trace(x = ~recrac, y = ~cmd, name = 'recettes base', type = 'bar', orientation = 'h',  bar = list(color = "blue")) %>%
+          plotly::add_trace(x = ~recrac_exbh, y = ~cmd, name = 'recettes bornes', type = 'bar', orientation = 'h',  bar = list(color = "blue")) %>%
+          plotly::add_trace(x = ~recracsup, y = ~cmd, name = 'recettes suppléments', type = 'bar', orientation = 'h',  bar = list(color = "blue")) %>%
+          plotly::add_trace(x = ~diff_tarifsante, y = ~cmd, name = 'effet tarifs', type = 'bar', orientation = 'h', bar = list(color = "blue")) %>%
+          plotly::add_trace(x = ~theoriq_num, y = ~cmd, xaxis="x", name = 'recettes théorique (% sev./rac. année préc.)', type = 'bar', orientation = 'h', bar = list(color = "red")) %>%
+          plotly::add_trace(x = ~recrac_consol, y = ~cmd, name = 'recettes base n-1', type = 'bar', orientation = 'h',  bar = list(color = "green")) %>%
+          plotly::add_trace(x = ~recrac_exbh_consol, y = ~cmd, name = 'recettes bornes n-1', type = 'bar', orientation = 'h',  bar = list(color = "green")) %>%
+          plotly::add_trace(x = ~recracsup_consol, y = ~cmd, name = 'recettes suppléments n-1', type = 'bar', orientation = 'h', bar = list(color = "green")) %>%
+          plotly::add_trace(x = ~evol_consol, y = ~cmd, name = 'consolidation totale n-1', type = 'bar', orientation = 'h', bar = list(color = "green")) %>%
+          plotly::add_trace(type = 'scatter', mode = 'lines+markers', x=~nrac, y=~cmd, xaxis="x2", name="activité", line = list(color = "orange")) %>%
+          plotly::add_trace(type = 'scatter', mode = 'lines+markers', x=~nrac_consol, y=~cmd, xaxis="x2", name="activité n-1", line = list(color = "yellow")) %>%
+          plotly::layout(xaxis = list(tickfont = list(color = "blue"),  side = "bottom", anchor = "y", title = "recettes (€)"), xaxis2 = list(tickfont = list(color = "black"), overlaying = "x", side = "top", anchor = "y", title = "activité (nbr de séjours)"))
+      })
       
       anavalograph <- rum %>% dplyr::filter(LIBUM %in% unitemed, as.numeric(ansor_sej) == anno | as.numeric(ansor_sej) == anno-1, as.numeric(moissor_sej) <= mese) %>% dplyr::group_by(sum_valo=substr(cdghm,3,3)) %>% dplyr::mutate(année=as.factor(ansor_sej)) %>% dplyr::select(norss, cdghm, dureesejpart, LIBUM, année, valotime:valopmctmonotime2, nbrum_sej, libelle_racine_sej, libelle_da_sej, libelle_ga_sej)
       

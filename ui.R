@@ -44,8 +44,9 @@ dashboardPage(
                   shinydashboard::box(DTOutput(outputId="activ11"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Détail des GHM", status = "primary") )
         ),
         tabItem(tabName="valoglob", h2("Valorisation globale des rss"),  
-                shinydashboard::box(plotlyOutput(outputId="valo0"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Répartition des recettes de l'année en cours réelles et théoriques (selon proportion de sévérité par racines de l'année précédente)", status = "primary"),
-                shinydashboard::box(DTOutput(outputId="valo1"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =TRUE, title = "Valorisation globale (rss des sejours passés par l'unité)", status = "primary"),
+                # shinydashboard::box(plotlyOutput(outputId="valo0"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Répartition des recettes de l'année en cours réelles et théoriques (selon proportion de sévérité par racines de l'année précédente)", status = "primary"),
+                shinydashboard::box(DTOutput(outputId="valo0"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =TRUE, title = "Valorisation globale annuelle (rss des sejours passés par l'unité)", status = "primary"),
+                shinydashboard::box(DTOutput(outputId="valo1"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =TRUE, title = "Valorisation globale mensuelle (rss des sejours passés par l'unité)", status = "primary"),
                 shinydashboard::box(plotOutput(outputId="valo2"), width = 6, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Distribution de la valorisation globale", status = "primary"),
                 shinydashboard::box(plotlyOutput(outputId="valo3"), width = 6, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Valorisation globale selon la durée", status = "primary"),
                 shinydashboard::box(plotlyOutput(outputId="valo4"), width = 6, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Valorisation globale selon le type au cours du temps", status = "primary"),
@@ -64,7 +65,8 @@ dashboardPage(
                 shinydashboard::box(DTOutput(outputId="pmct8"), width = 6, solidHeader = TRUE, collapsible = TRUE, collapsed =TRUE, title = "PMCT des monorum utilisé pour la clef de répartition", status = "primary"),
                 shinydashboard::box(DTOutput(outputId="pmct9"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =TRUE, title = "PMCT des monorum des autres unités utilisés pour la clef de répartition", status = "primary"),
                 shinydashboard::box(plotlyOutput(outputId="pmct10"), width = 6, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Evolution du coefficient de repartition selon l'année", status = "primary"),
-                shinydashboard::box(plotOutput(outputId="pmct11"), width = 6, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Evolution du coefficient de repartition selon l'année", status = "primary") ),
+                shinydashboard::box(plotOutput(outputId="pmct11"), width = 6, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Evolution du coefficient de repartition selon l'année", status = "primary")
+        ),
         tabItem(tabName="parcours", h2("Analyse des flux de patients"),
                 fluidRow(
                   shinydashboard::box(sunburstOutput(outputId="parcours1"), width = 6, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Parcours patients année en cours", status = "primary"),
@@ -81,9 +83,12 @@ dashboardPage(
                 # shinydashboard::box(sankeyNetworkOutput(outputId="parcours9"), width = 6, solidHeader = TRUE, collapsible = TRUE, collapsed =TRUE, title = "Flux de séjours"),
                 # shinydashboard::box(sankeyNetworkOutput(outputId="parcours10"), width = 6, solidHeader = TRUE, collapsible = TRUE, collapsed =TRUE, title = "Flux de séjours"),
                 shinydashboard::box(plotlyOutput(outputId="parcours11"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Journées d'hospitalisation selon le type d'autorisation des services", status = "primary"))
-                
         ),
         tabItem(tabName="anavalo", h2("Analyse des variations de valorisation des rums selon le casemix"),
+                shinydashboard::box(DTOutput(outputId="anavalo01"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Valorisation des rums", status = "primary"),
+                shinydashboard::box(DTOutput(outputId="anavalo02"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Valorisation des rums - détail", status = "primary"),
+                shinydashboard::box(DTOutput(outputId="anavalo03"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Différentiels de valorisation sur 1 an", status = "primary"),
+                shinydashboard::box(plotlyOutput(outputId="anavalo0"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Différentiels de valorisation sur 1 an, par CMD", status = "primary"),
                 shinydashboard::box(plotlyOutput(outputId="anavalo1"), width = 6, solidHeader = TRUE, collapsible = TRUE, collapsed =TRUE, title = "Valorisation selon le type du casemix", status = "primary"),
                 shinydashboard::box(plotlyOutput(outputId="anavalo2"), width = 6, solidHeader = TRUE, collapsible = TRUE, collapsed =TRUE, title = "Valorisation selon la sévérité", status = "primary"),
                 shinydashboard::box(plotlyOutput(outputId="anavalo3"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =TRUE, title = "Valorisation selon les CMD", status = "primary"),
