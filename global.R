@@ -11,6 +11,7 @@ library(sunburstR)
 library(RColorBrewer)
 library(colorspace)
 library(comorbidity)
+library(nomensland)
 
 onStop(session = NULL, fun = function() {
   rm(anno)

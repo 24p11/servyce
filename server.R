@@ -112,15 +112,15 @@ function(input, output, session) {
       # names(fichier_structure) <- c('nofiness', 'hopital', 'cdurm', 'uma_locale', 'uma_locale2', 'libelle_um', 'service', 'regroupement1', 'pole')
       
       # load referentiels des DMS nationales:
-      dms1 <- referime::get_table('ghm_dms_nationales') %>% dplyr::filter(ghs!="") %>% dplyr::bind_rows(., dplyr::filter(referime::get_table('ghm_dms_nationales') %>% dplyr::filter(ghs!="")  %>% dplyr::filter(anseqta==anno-1) %>% dplyr::mutate(anseqta=as.character(anno))))
-      dms2 <- referime::get_table('ghm_dms_nationales') %>% dplyr::filter(ghs=="") %>% dplyr::bind_rows(., dplyr::filter(referime::get_table('ghm_dms_nationales') %>% dplyr::filter(ghs=="")  %>% dplyr::filter(anseqta==anno-1) %>% dplyr::mutate(anseqta=as.character(anno))))
+      dms1 <- nomensland::get_table('ghm_dms_nationales') %>% dplyr::filter(ghs!="") %>% dplyr::bind_rows(., dplyr::filter(nomensland::get_table('ghm_dms_nationales') %>% dplyr::filter(ghs!="")  %>% dplyr::filter(anseqta==anno-1) %>% dplyr::mutate(anseqta=as.character(anno))))
+      dms2 <- nomensland::get_table('ghm_dms_nationales') %>% dplyr::filter(ghs=="") %>% dplyr::bind_rows(., dplyr::filter(nomensland::get_table('ghm_dms_nationales') %>% dplyr::filter(ghs=="")  %>% dplyr::filter(anseqta==anno-1) %>% dplyr::mutate(anseqta=as.character(anno))))
       
       # load referentiel regroupements:
-      reg1 <- referime::get_table('ghm_ghm_regroupement') %>% dplyr::mutate(racine=substr(ghm,1,5))
-      reg2 <- dplyr::bind_rows(referime::get_table('ghm_rghm_regroupement'), referime::get_table('ghm_rghm_regroupement') %>% dplyr::filter(anseqta=="2017") %>% dplyr::mutate(anseqta="2018"))
+      reg1 <- nomensland::get_table('ghm_ghm_regroupement') %>% dplyr::mutate(racine=substr(ghm,1,5))
+      reg2 <- dplyr::bind_rows(nomensland::get_table('ghm_rghm_regroupement'), nomensland::get_table('ghm_rghm_regroupement') %>% dplyr::filter(anseqta=="2017") %>% dplyr::mutate(anseqta="2018"))
       
       # load referentiel tarifs:
-      tarifs <<- referime::get_table('tarifs_mco_ghs') 	
+      tarifs <<- nomensland::get_table('tarifs_mco_ghs') 	
       
       incProgress(0.1, detail = paste("création des variables"))
       
