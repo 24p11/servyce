@@ -986,6 +986,7 @@ function(input, output, session) {
       custom.message = "function (d) {root = d; while (root.parent) {root = root.parent} p = (100*d.value/root.value).toPrecision(3); msg = p+' %<br/>'+d.value+' of '+root.value;  return msg;}"
       
       #Sunburst parcours
+      
       output$parcours1 <- renderSunburst({ 
         
         daz <- rum %>% dplyr::select(norss, nas, norum, nbrum_sej, LIBUM, ansor_sej, moissor_sej, uma_locale2, libelle_um) %>%
