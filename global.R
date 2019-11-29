@@ -13,20 +13,8 @@ library(colorspace)
 library(comorbidity)
 library(nomensland)
 
-onStop(session = NULL, fun = function() {
-  rm(anno)
-  rm(mese)
-  rm(aconsol)
-  rm(mconsol)
-  rm(naselect)
-  rm(pmctmono)
-  rm(pmctmono_ante)
-  rm(pmctmono_consol)
-  rm(rsa)
-  rm(rum)
-  rm(structures)
-  rm(tarifs)
-  rm(unita)
-  rm(unitemed)
-  } )
+sites <<- c('750100042', '750100075')
+strctr <<- "/mnt/commons/Groupe_de_travail/GH_PMSI/INFORMATIQUE/GIT/remi/tableaux_de_bord/structures.xlsx"
+datapath <<- "/mnt/commons/Groupe_de_travail/GH_PMSI/DATA/GENRSA/"
+
 
