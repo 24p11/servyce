@@ -2,10 +2,6 @@
 dashboardPage(
   dashboardHeader(title="SBIM"),
   dashboardSidebar(
-    # fileInput("courant", "Rdata du mois d'analyse", multiple = FALSE), 
-    # fileInput("tarifsant", "Rdata des valorisations aux tarifs precedents", multiple = FALSE), 
-    # fileInput("consol", "Rdata année précédente", multiple = FALSE), 
-    # fileInput("nonconsol", "Rdata du mois d'analyse année précédente", multiple = FALSE), 
     selectInput("anno", "Selection de l'année", choices = list("Année 2015" = 2015, "Année 2016" = 2016, "Année 2017" = 2017, "Année 2018" = 2018, "Année 2019" = 2019, "Année 2020" = 2020, "Année 2021" = 2021, "Année 2022" = 2022, "Année 2020" = 2023, "Année 2021" = 2024, "Année 2022" = 2025), selected = 2019),
     selectInput("mese", "Selection du mois de remontée", choices = list("M1" = 1, "M2" = 2, "M3" = 3, "M4" = 4, "M5" = 5, "M6" = 6, "M7" = 7, "M8" = 8, "M9" = 9, "M10" = 10, "M11" = 11, "M12" = 12), selected = 1),
     actionButton("build", icon("refresh"), label = "Construction des données"),
@@ -87,8 +83,8 @@ dashboardPage(
                tabItem(tabName="anavalo", h2("Analyse des variations de valorisation des rums selon le casemix"),
                        shinydashboard::box(DTOutput(outputId="anavalo01"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Valorisation des rums", status = "primary"),
                        shinydashboard::box(DTOutput(outputId="anavalo02"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Valorisation des rums - détail", status = "primary"),
-                       shinydashboard::box(DTOutput(outputId="anavalo03"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Différentiels de valorisation sur 1 an", status = "primary"),
-                       shinydashboard::box(plotlyOutput(outputId="anavalo0"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Différentiels de valorisation sur 1 an, par CMD", status = "primary"),
+                       # shinydashboard::box(DTOutput(outputId="anavalo03"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Différentiels de valorisation sur 1 an", status = "primary"),
+                       # shinydashboard::box(plotlyOutput(outputId="anavalo0"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =FALSE, title = "Différentiels de valorisation sur 1 an, par CMD", status = "primary"),
                        shinydashboard::box(plotlyOutput(outputId="anavalo1"), width = 6, solidHeader = TRUE, collapsible = TRUE, collapsed =TRUE, title = "Valorisation selon le type du casemix", status = "primary"),
                        shinydashboard::box(plotlyOutput(outputId="anavalo2"), width = 6, solidHeader = TRUE, collapsible = TRUE, collapsed =TRUE, title = "Valorisation selon la sévérité", status = "primary"),
                        shinydashboard::box(plotlyOutput(outputId="anavalo3"), width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed =TRUE, title = "Valorisation selon les CMD", status = "primary"),

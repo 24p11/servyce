@@ -120,26 +120,6 @@ function(input, output, session) {
       
       rum_tarifsante <- dplyr::left_join(structs, dplyr::left_join(get(paste0("rum_", anno, mese)), get(paste0("rum_v_tarifs_anterieurs_", anno, mese))) )
 
-      # rm(list = eval(paste0("rsa_", anno, mese)))
-      # rm(list = eval(paste0("rum_", anno, mese)))
-      # rm(list = eval(paste0("rum_v_", anno, mese)))
-      # rm(list = eval(paste0("diagnostics_", anno, mese)))
-      # rm(list = eval(paste0("pmctmono_", anno, mese)))
-      # 
-      # rm(list = eval(paste0("rsa_", anno-1, "12")))
-      # rm(list = eval(paste0("rum_", anno-1, "12")))
-      # rm(list = eval(paste0("rum_v_", anno-1, "12")))
-      # rm(list = eval(paste0("diagnostics_", anno-1, "12")))
-      # rm(list = eval(paste0("pmctmono_", anno-1, "12")))
-      # 
-      # rm(list = eval(paste0("rsa_", anno-1, mese)))
-      # rm(list = eval(paste0("rum_", anno-1, mese)))
-      # rm(list = eval(paste0("rum_v_", anno-1, mese)))
-      # rm(list = eval(paste0("pmctmono_", anno-1, mese)))
-      # 
-      # rm(list = eval(paste0("rsa_v_tarifs_anterieurs_", anno, "_", mese)))
-      # rm(list = eval(paste0("rum_v_tarifs_anterieurs_", anno, mese)))
-      
       incProgress(0.05, detail = paste("fichiers annexes"))
       
       # load referentiels des DMS nationales:
@@ -299,27 +279,27 @@ function(input, output, session) {
       
       output$listuma <- renderText({paste0("Calcul ok pour ", unitemed, "à M", mese, " de ", anno, " avec GHM inclus = ", input$ghmfilt1, " et GHM exclus = ", input$ghmfilt2)})
       
-      #Calcul objet incluant recettes théoriques (par racines)
-      
-      giac1 <- dplyr::filter(rum, as.numeric(moissor_sej)<=mese, as.numeric(ansor_sej)==anno-1, LIBUM %in% unitemed) %>%
-        dplyr::group_by(nas) %>% dplyr::summarise(ghm=first(cdghm), coefpmctmonotime1=sum(coefpmctmonotime1), valopmctmonotime1=sum(valopmctmonotime1), valopmctmonotime1_nonconsol=sum(valopmctmonotime1_nonconsol), rec_sup_repa=sum(rec_sup_repa)) %>% dplyr::ungroup(.) %>%
-        dplyr::left_join(.,  dplyr::left_join(rsa %>% dplyr::mutate(rec_exbh=rec_exh+rec_exb) %>% dplyr::select(nas, ghs=noghs, rec_base, rec_exbh), dplyr::filter(tarifs, anseqta==as.character(anno)) %>% dplyr::select(ghs, tarif_base) ) ) %>% dplyr::mutate(racine=substr(ghm, 1, 5), valo_base=coefpmctmonotime1*rec_base, valo_exbh=coefpmctmonotime1*rec_exbh, diffconsol=valopmctmonotime1-valopmctmonotime1_nonconsol) %>%
-        dplyr::group_by(racine) %>%
-        dplyr::mutate(nrac=length(ghs), recrac_consol=sum(valo_base), recrac_exbh_consol=sum(valo_exbh), recrac_diffconsol=sum(diffconsol), recracsupconsol=sum(rec_sup_repa)) %>%
-        dplyr::group_by(ghs) %>%
-        dplyr::mutate(nghs=length(ghs), repanum=length(ghs)/nrac*tarif_base) %>% 
-        ungroup(.) %>%
-        dplyr::distinct(ghm, ghs, .keep_all=TRUE) %>%
-        dplyr::group_by(racine) %>%
-        dplyr::summarise(repanum_rac=sum(repanum), nrac_consol=first(nrac), recrac_consol=first(recrac_consol), recrac_exbh_consol=first(recrac_exbh_consol), evol_consol=first(recrac_diffconsol), recracsup_consol=first(recracsupconsol))
-      
-      giac2 <- dplyr::left_join(dplyr::filter(rum, ansor_sej==anno, LIBUM %in% unitemed) %>% dplyr::group_by(nas) %>% dplyr::summarise(ghm=first(cdghm), coefpmctmonotime1=sum(coefpmctmonotime1), valopmctmonotime1=sum(valopmctmonotime1), valopmctmonotime1_tarifsante=sum(valopmctmonotime1_tarifsante), rec_sup_repa=sum(rec_sup_repa)) %>% dplyr::ungroup(.), rsa  %>% dplyr::mutate(rec_exbh=rec_exh+rec_exb) %>% dplyr::select(nas, ghs=noghs, rec_base, rec_exbh) ) %>% 
-        dplyr::mutate(racine=substr(ghm, 1, 5), valo_base=coefpmctmonotime1*rec_base, valo_exbh=coefpmctmonotime1*rec_exbh, difftarifsante=valopmctmonotime1_tarifsante-valopmctmonotime1) %>% dplyr::group_by(racine) %>%
-        dplyr::summarise(nrac=sum(coefpmctmonotime1), nracreel=length(ghs), recrac=sum(valo_base), recrac_exbh=sum(valo_exbh), recrac_difftarifsante=sum(difftarifsante), recracsup=sum(rec_sup_repa)) %>% ungroup(.)
-      
-      giac <<- dplyr::full_join(giac1, giac2) %>%
-        dplyr::mutate_at(., vars(repanum_rac, nrac_consol, recrac_consol, recrac_exbh_consol, evol_consol, recracsup_consol), ~ifelse(is.na(.), 0, .)) %>%  
-        dplyr::mutate(theoriq_num=repanum_rac*nrac, diff_rec=(recrac+recrac_exbh+recracsup)-(recrac_consol+recrac_exbh_consol+recracsup_consol), diff_rec_base=recrac-recrac_consol, diff_rec_exbh=recrac_exbh-recrac_exbh_consol, diff_rec_supp=recracsup-recracsup_consol, diff_tarifsante=recrac_difftarifsante, diff_consol=evol_consol, diff_theoriq=recrac-theoriq_num, diff_reste=diff_rec_base+diff_rec_exbh+diff_rec_supp+diff_tarifsante+diff_theoriq)
+      #DRAFT DE Calcul objet incluant recettes théoriques (par racines)
+      #
+      # giac1 <- dplyr::filter(rum, as.numeric(moissor_sej)<=mese, as.numeric(ansor_sej)==anno-1, LIBUM %in% unitemed) %>%
+      #   dplyr::group_by(nas) %>% dplyr::summarise(ghm=first(cdghm), coefpmctmonotime1=sum(coefpmctmonotime1), valopmctmonotime1=sum(valopmctmonotime1), valopmctmonotime1_nonconsol=sum(valopmctmonotime1_nonconsol), rec_sup_repa=sum(rec_sup_repa)) %>% dplyr::ungroup(.) %>%
+      #   dplyr::left_join(.,  dplyr::left_join(rsa %>% dplyr::mutate(rec_exbh=rec_exh+rec_exb) %>% dplyr::select(nas, ghs=noghs, rec_base, rec_exbh), dplyr::filter(tarifs, anseqta==as.character(anno)) %>% dplyr::select(ghs, tarif_base) ) ) %>% dplyr::mutate(racine=substr(ghm, 1, 5), valo_base=coefpmctmonotime1*rec_base, valo_exbh=coefpmctmonotime1*rec_exbh, diffconsol=valopmctmonotime1-valopmctmonotime1_nonconsol) %>%
+      #   dplyr::group_by(racine) %>%
+      #   dplyr::mutate(nrac=length(ghs), recrac_consol=sum(valo_base), recrac_exbh_consol=sum(valo_exbh), recrac_diffconsol=sum(diffconsol), recracsupconsol=sum(rec_sup_repa)) %>%
+      #   dplyr::group_by(ghs) %>%
+      #   dplyr::mutate(nghs=length(ghs), repanum=length(ghs)/nrac*tarif_base) %>% 
+      #   ungroup(.) %>%
+      #   dplyr::distinct(ghm, ghs, .keep_all=TRUE) %>%
+      #   dplyr::group_by(racine) %>%
+      #   dplyr::summarise(repanum_rac=sum(repanum), nrac_consol=first(nrac), recrac_consol=first(recrac_consol), recrac_exbh_consol=first(recrac_exbh_consol), evol_consol=first(recrac_diffconsol), recracsup_consol=first(recracsupconsol))
+      # 
+      # giac2 <- dplyr::left_join(dplyr::filter(rum, ansor_sej==anno, LIBUM %in% unitemed) %>% dplyr::group_by(nas) %>% dplyr::summarise(ghm=first(cdghm), coefpmctmonotime1=sum(coefpmctmonotime1), valopmctmonotime1=sum(valopmctmonotime1), valopmctmonotime1_tarifsante=sum(valopmctmonotime1_tarifsante), rec_sup_repa=sum(rec_sup_repa)) %>% dplyr::ungroup(.), rsa  %>% dplyr::mutate(rec_exbh=rec_exh+rec_exb) %>% dplyr::select(nas, ghs=noghs, rec_base, rec_exbh) ) %>% 
+      #   dplyr::mutate(racine=substr(ghm, 1, 5), valo_base=coefpmctmonotime1*rec_base, valo_exbh=coefpmctmonotime1*rec_exbh, difftarifsante=valopmctmonotime1_tarifsante-valopmctmonotime1) %>% dplyr::group_by(racine) %>%
+      #   dplyr::summarise(nrac=sum(coefpmctmonotime1), nracreel=length(ghs), recrac=sum(valo_base), recrac_exbh=sum(valo_exbh), recrac_difftarifsante=sum(difftarifsante), recracsup=sum(rec_sup_repa)) %>% ungroup(.)
+      # 
+      # giac <<- dplyr::full_join(giac1, giac2) %>%
+      #   dplyr::mutate_at(., vars(repanum_rac, nrac_consol, recrac_consol, recrac_exbh_consol, evol_consol, recracsup_consol), ~ifelse(is.na(.), 0, .)) %>%  
+      #   dplyr::mutate(theoriq_num=repanum_rac*nrac, diff_rec=(recrac+recrac_exbh+recracsup)-(recrac_consol+recrac_exbh_consol+recracsup_consol), diff_rec_base=recrac-recrac_consol, diff_rec_exbh=recrac_exbh-recrac_exbh_consol, diff_rec_supp=recracsup-recracsup_consol, diff_tarifsante=recrac_difftarifsante, diff_consol=evol_consol, diff_theoriq=recrac-theoriq_num, diff_reste=diff_rec_base+diff_rec_exbh+diff_rec_supp+diff_tarifsante+diff_theoriq)
       
     })
   } )
@@ -549,6 +529,7 @@ function(input, output, session) {
     
     if(input$menuchoice=="valoglob") {
       
+      #DRAFT DE Graphique des recettes theoriques globales:
       # output$valo0 <- renderPlotly({
       #   temp1 <- giacimento %>% dplyr::group_by(severite=substr(ghm, 6, 6)) %>% dplyr::summarise(diff=sum(diff), recghm=sum(recghm), theoriq=sum(theoriq), activ=sum(nghm), activante=sum(nghm_giac, na.rm=TRUE))
       #   p1 <- plot_ly(data=temp1, x = ~recghm, y = ~severite, name = 'recettes réelles', type = 'bar', orientation = 'h', color = 'rgb(205, 12, 24)') %>%
@@ -1038,20 +1019,51 @@ function(input, output, session) {
       
       output$parcours2 <- renderDT({
         
-        rum %>% dplyr::select(norss, nas, norum, nbrum_sej, LIBUM, ansor_sej, moissor_sej, uma_locale2, libelle_um, cdghm, libelle_racine_sej, libelle_da_sej, libelle_ga_sej) %>%
-          dplyr::filter(nbrum_sej >= 2, norss%in%norss[LIBUM %in% unitemed], as.numeric(ansor_sej) == anno, as.numeric(moissor_sej) <= mese) %>%
+        rum %>% dplyr::select(
+          norss,
+          nas,
+          norum,
+          nbrum_sej,
+          LIBUM,
+          ansor_sej,
+          moissor_sej,
+          uma_locale2,
+          libelle_um,
+          cdghm,
+          libelle_racine_sej,
+          libelle_da_sej,
+          libelle_ga_sej
+        ) %>%
+          dplyr::filter(
+            nbrum_sej >= 2,
+            norss %in% norss[LIBUM %in% unitemed],
+            as.numeric(ansor_sej) == anno,
+            as.numeric(moissor_sej) <= mese
+          ) %>%
           dplyr::arrange(nas, norum) %>%
           dplyr::group_by(nas) %>%
-          # POUR FAIRE LES SEQUENCES SELON REGROUPEMENT OU SELON UNITE MEDICALE UNIQUE, commenter/decommenter la ligne ci-dessous et la suivante 
-          dplyr::summarise(URMS=paste0(paste0(uma_locale2," ",libelle_um),collapse=",")) %>%
+          
+          # POUR FAIRE LES SEQUENCES SELON REGROUPEMENT OU SELON UNITE MEDICALE UNIQUE, commenter/decommenter la ligne ci-dessous et la suivante
+          dplyr::summarise(URMS = paste0(paste0(uma_locale2, " ", libelle_um), collapse = ",")) %>%
           # dplyr::summarise(URMS=paste0(LIBUM,collapse=",")) %>%
-          dplyr::left_join(., rum %>% dplyr::select(nas, cdghm, libelle_racine_sej, libelle_da_sej, libelle_ga_sej) %>%
-                             dplyr::filter(!duplicated(nas)), by='nas') %>% dplyr::group_by(URMS, libelle_da_sej) %>%
-          dplyr::summarise(n=n_distinct(nas)) %>% dplyr::arrange(URMS,desc(n)) %>%
+         
+           dplyr::left_join(
+            .,
+            rum %>% 
+              dplyr::select(nas, cdghm, libelle_racine_sej, libelle_da_sej, libelle_ga_sej) %>%
+              dplyr::filter(!duplicated(nas)),
+            by = 'nas'
+          ) %>% 
+          dplyr::group_by(URMS, libelle_da_sej) %>%
+          dplyr::summarise(n = n_distinct(nas)) %>% 
+          dplyr::arrange(URMS, desc(n)) %>%
           dplyr::group_by(URMS) %>%
-          dplyr::summarise(GHMS=paste0(strsplit(paste0(paste0(libelle_da_sej,"(",n,")"),collapse=", "), ",")[[1]][1:3], collapse=","), n_urms=sum(n)) %>%
+          dplyr::summarise(GHMS = paste0(strsplit(paste0(
+            paste0(libelle_da_sej, "(", n, ")"), collapse = ", "
+          ), ",")[[1]][1:3], collapse = ","),
+          n_urms = sum(n)) %>%
           dplyr::arrange(desc(n_urms)) %>%
-          dplyr::filter(row_number()<6)
+          dplyr::filter(row_number() < 6)
         
       }, 
       caption="Domaines d'activité des 5 parcours les plus representés", 
@@ -1061,18 +1073,49 @@ function(input, output, session) {
       options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel')))
       
       output$parcours3 <- renderSunburst({ 
-        daz <- rum %>% dplyr::select(norss, nas, norum, nbrum_sej, LIBUM, ansor_sej, moissor_sej, uma_locale2, libelle_um) %>%
-          dplyr::filter(nbrum_sej >= 2, 
-                        norss%in%norss[LIBUM %in% unitemed], 
-                        as.numeric(ansor_sej) == anno-1, 
-                        as.numeric(moissor_sej) <= mese)  # on peut remplacer 12 par mese si c'est ce qu'on préfère
-        lib <- c(libum$unite, unique(daz$LIBUM[!daz$LIBUM %in% libum$unite]))
+        
+        daz <-
+          rum %>% dplyr::select(norss,
+                                nas,
+                                norum,
+                                nbrum_sej,
+                                LIBUM,
+                                ansor_sej,
+                                moissor_sej,
+                                uma_locale2,
+                                libelle_um) %>%
+          dplyr::filter(
+            nbrum_sej >= 2,
+            norss %in% norss[LIBUM %in% unitemed],
+            as.numeric(ansor_sej) == anno - 1,
+            as.numeric(moissor_sej) <= mese
+          )  # on peut remplacer 12 par mese si c'est ce qu'on préfère
+        
+        lib <-
+          c(libum$unite, unique(daz$LIBUM[!daz$LIBUM %in% libum$unite]))
         colrs <- c(colors, pal(length(lib) - length(libum$unite)))
-        # POUR FAIRE LES SEQUENCES SELON REGROUPEMENT OU SELON UNITE MEDICALE UNIQUE, commenter/decommenter la ligne ci-dessous et la suivante 
-        daz %>% dplyr::arrange(nas, norum) %>% dplyr::group_by(nas) %>% dplyr::summarise(URMS=paste0(paste0(uma_locale2," ",libelle_um),collapse=",")) -> temp2  
+        
+        # POUR FAIRE LES SEQUENCES SELON REGROUPEMENT OU SELON UNITE MEDICALE UNIQUE, commenter/decommenter la ligne ci-dessous et la suivante
+        daz %>% dplyr::arrange(nas, norum) %>% dplyr::group_by(nas) %>% dplyr::summarise(URMS = paste0(paste0(uma_locale2, " ", libelle_um), collapse = ",")) -> temp2
         # daz %>% dplyr::arrange(nas, norum) %>% dplyr::group_by(nas) %>% dplyr::summarise(URMS=paste0(LIBUM,collapse=",")) -> temp2
-        temp2 %>% dplyr::filter(grepl(",",URMS)) %>% dplyr::group_by(URMS) %>% dplyr::summarise(nbrSej=n_distinct(nas)) %>% dplyr::mutate(URMS=gsub("-"," ",URMS),URMS=gsub(",","-",URMS)) -> temp3
-        sunburst(temp3, legend = list(w = 300, h = 15, r = 10, s = 2), explanation = custom.message, colors = list(range = colrs, domain = gsub("-", " ", lib)))
+        
+        temp2 %>% 
+          dplyr::filter(grepl(",", URMS)) %>% 
+          dplyr::group_by(URMS) %>% 
+          dplyr::summarise(nbrSej = n_distinct(nas)) %>% 
+          dplyr::mutate(URMS = gsub("-", " ", URMS), URMS = gsub(",", "-", URMS)) -> temp3
+        
+        sunburst(
+          temp3,
+          legend = list(
+            w = 300,
+            h = 15,
+            r = 10,
+            s = 2
+          ),
+          explanation = custom.message,
+          colors = list(range = colrs, domain = gsub("-", " ", lib))
+        )
       })
       
       output$parcours4 <- renderDT({
@@ -1081,9 +1124,11 @@ function(input, output, session) {
           dplyr::filter(nbrum_sej >= 2, norss%in%norss[LIBUM %in% unitemed], as.numeric(ansor_sej) == anno, as.numeric(moissor_sej) <= mese) %>%
           dplyr::arrange(nas, norum) %>%
           dplyr::group_by(nas) %>%
+          
           # POUR FAIRE LES SEQUENCES SELON REGROUPEMENT OU SELON UNITE MEDICALE UNIQUE, commenter/decommenter la ligne ci-dessous et la suivante 
           dplyr::summarise(URMS=paste0(paste0(uma_locale2," ",libelle_um),collapse=",")) %>%
           # dplyr::summarise(URMS=paste0(LIBUM,collapse=",")) %>%
+          
           dplyr::left_join(., rum %>% dplyr::select(nas, cdghm, libelle_racine_sej, libelle_da_sej, libelle_ga_sej) %>%
                              dplyr::filter(!duplicated(nas)), by='nas') %>% dplyr::group_by(URMS, libelle_da_sej) %>%
           dplyr::summarise(n=n_distinct(nas)) %>% dplyr::arrange(URMS,desc(n)) %>%
@@ -1095,54 +1140,185 @@ function(input, output, session) {
       }, caption="Domaines d'activité des 5 parcours les plus representés", rownames=FALSE, extensions = 'Buttons', filter = 'top', options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel')))
       
       output$parcours5 <- renderSunburst({ 
-        daz <- rum %>% dplyr::select(norss, nas, norum, nbrum_sej, LIBUM, ansor_sej, moissor_sej, uma_locale2, libelle_um) %>%
-          dplyr::filter(nbrum_sej >= 2, 
-                        norss%in%norss[LIBUM %in% unitemed], 
-                        as.numeric(ansor_sej) == anno-1, 
-                        as.numeric(moissor_sej) <= 12)  # on peut remplacer 12 par mese si c'est ce qu'on préfère
-        lib <- c(libum$unite, unique(daz$LIBUM[!daz$LIBUM %in% libum$unite]))
+        
+        daz <-
+          rum %>% dplyr::select(norss,
+                                nas,
+                                norum,
+                                nbrum_sej,
+                                LIBUM,
+                                ansor_sej,
+                                moissor_sej,
+                                uma_locale2,
+                                libelle_um) %>%
+          dplyr::filter(
+            nbrum_sej >= 2,
+            norss %in% norss[LIBUM %in% unitemed],
+            as.numeric(ansor_sej) == anno - 1,
+            as.numeric(moissor_sej) <= 12
+          )  # on peut remplacer 12 par mese si c'est ce qu'on préfère
+        
+        lib <-
+          c(libum$unite, unique(daz$LIBUM[!daz$LIBUM %in% libum$unite]))
         colrs <- c(colors, pal(length(lib) - length(libum$unite)))
-        # POUR FAIRE LES SEQUENCES SELON REGROUPEMENT OU SELON UNITE MEDICALE UNIQUE, commenter/decommenter la ligne ci-dessous et la suivante 
-        daz %>% dplyr::arrange(nas, norum) %>% dplyr::group_by(nas) %>% dplyr::summarise(URMS=paste0(paste0(uma_locale2,"",libelle_um),collapse=",")) -> temp2
+        
+        # POUR FAIRE LES SEQUENCES SELON REGROUPEMENT OU SELON UNITE MEDICALE UNIQUE, commenter/decommenter la ligne ci-dessous et la suivante
+        daz %>% dplyr::arrange(nas, norum) %>% dplyr::group_by(nas) %>% dplyr::summarise(URMS = paste0(paste0(uma_locale2, "", libelle_um), collapse = ",")) -> temp2
         # daz %>% dplyr::arrange(nas, norum) %>% dplyr::group_by(nas) %>% dplyr::summarise(URMS=paste0(LIBUM,collapse=",")) -> temp2
-        temp2 %>% dplyr::filter(grepl(",",URMS)) %>% dplyr::group_by(URMS) %>% dplyr::summarise(nbrSej=n_distinct(nas)) %>% dplyr::mutate(URMS=gsub("-"," ",URMS),URMS=gsub(",","-",URMS)) -> temp3
-        sunburst(temp3, legend = list(w = 300, h = 15, r = 10, s = 2), explanation = custom.message, colors = list(range = colrs, domain = gsub("-", " ", lib)))
+        
+        temp2 %>% 
+          dplyr::filter(grepl(",", URMS)) %>% 
+          dplyr::group_by(URMS) %>% 
+          dplyr::summarise(nbrSej = n_distinct(nas)) %>% 
+          dplyr::mutate(URMS = gsub("-", " ", URMS), URMS = gsub(",", "-", URMS)) -> temp3
+        
+        sunburst(
+          temp3,
+          legend = list(
+            w = 300,
+            h = 15,
+            r = 10,
+            s = 2
+          ),
+          explanation = custom.message,
+          colors = list(range = colrs, domain = gsub("-", " ", lib))
+        )
       })
       
       output$parcours6 <- renderDT({
         
-        rum %>% dplyr::select(norss, nas, norum, nbrum_sej, LIBUM, ansor_sej, moissor_sej, uma_locale2, libelle_um, cdghm, libelle_racine_sej, libelle_da_sej, libelle_ga_sej) %>%
-          dplyr::filter(nbrum_sej >= 2, norss%in%norss[LIBUM %in% unitemed], as.numeric(ansor_sej) == anno, as.numeric(moissor_sej) <= mese) %>%
+        rum %>% dplyr::select(
+          norss,
+          nas,
+          norum,
+          nbrum_sej,
+          LIBUM,
+          ansor_sej,
+          moissor_sej,
+          uma_locale2,
+          libelle_um,
+          cdghm,
+          libelle_racine_sej,
+          libelle_da_sej,
+          libelle_ga_sej
+        ) %>%
+          dplyr::filter(
+            nbrum_sej >= 2,
+            norss %in% norss[LIBUM %in% unitemed],
+            as.numeric(ansor_sej) == anno,
+            as.numeric(moissor_sej) <= mese
+          ) %>%
           dplyr::arrange(nas, norum) %>%
           dplyr::group_by(nas) %>%
-          # POUR FAIRE LES SEQUENCES SELON REGROUPEMENT OU SELON UNITE MEDICALE UNIQUE, commenter/decommenter la ligne ci-dessous et la suivante 
-          dplyr::summarise(URMS=paste0(paste0(uma_locale2," ",libelle_um),collapse=",")) %>%
+          
+          # POUR FAIRE LES SEQUENCES SELON REGROUPEMENT OU SELON UNITE MEDICALE UNIQUE, commenter/decommenter la ligne ci-dessous et la suivante
+          dplyr::summarise(URMS = paste0(paste0(uma_locale2, " ", libelle_um), collapse = ",")) %>%
           # dplyr::summarise(URMS=paste0(LIBUM,collapse=",")) %>%
-          dplyr::left_join(., rum %>% dplyr::select(nas, cdghm, libelle_racine_sej, libelle_da_sej, libelle_ga_sej) %>%
-                             dplyr::filter(!duplicated(nas)), by='nas') %>% dplyr::group_by(URMS, libelle_da_sej) %>%
-          dplyr::summarise(n=n_distinct(nas)) %>% dplyr::arrange(URMS,desc(n)) %>%
+          
+          dplyr::left_join(
+            .,
+            rum %>% dplyr::select(nas, cdghm, libelle_racine_sej, libelle_da_sej, libelle_ga_sej) %>%
+              dplyr::filter(!duplicated(nas)),
+            by = 'nas'
+          ) %>% dplyr::group_by(URMS, libelle_da_sej) %>%
+          dplyr::summarise(n = n_distinct(nas)) %>% dplyr::arrange(URMS, desc(n)) %>%
           dplyr::group_by(URMS) %>%
-          dplyr::summarise(GHMS=paste0(strsplit(paste0(paste0(libelle_da_sej,"(",n,")"),collapse=", "), ",")[[1]][1:3], collapse=","), n_urms=sum(n)) %>%
+          dplyr::summarise(GHMS = paste0(strsplit(paste0(
+            paste0(libelle_da_sej, "(", n, ")"), collapse = ", "
+          ), ",")[[1]][1:3], collapse = ","),
+          n_urms = sum(n)) %>%
           dplyr::arrange(desc(n_urms)) %>%
-          dplyr::filter(row_number()<6)
+          dplyr::filter(row_number() < 6)
         
-      }, caption="Domaines d'activité des 5 parcours les plus representés", rownames=FALSE, extensions = 'Buttons', filter = 'top', options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel')))
+      }, caption="Domaines d'activité des 5 parcours les plus representés", 
+      rownames=FALSE, extensions = 'Buttons', 
+      filter = 'top', 
+      options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel')))
       
       output$parcours7 <- renderForceNetwork({
-        rum %>% dplyr::filter(ansor_sej==anno,as.numeric(moissor_sej)<=mese) -> temp0
-        temp0 %>% dplyr::filter(norss%in%norss[LIBUM %in% unitemed]) -> temp1
-        temp1 %>% dplyr::group_by(LIBUM) %>% dplyr::summarise(nvalue1=sum(dureesejpart)/10,HOPITAL=first(nofiness),LIBPOLE=first(pole)) %>% dplyr::filter(!duplicated(LIBUM),!is.na(LIBUM)) %>% dplyr::mutate(code=as.integer(row.names(.))-1) -> nodes
-        temp1 %>% dplyr::select(norss,norum,LIBUM,nofiness,pole) %>% dplyr::arrange(norss,norum) %>% dplyr::mutate(source=LIBUM,target=ifelse(dplyr::lead(norss)==norss,dplyr::lead(LIBUM),NA)) %>% dplyr::mutate(source=factor(source,levels=nodes$LIBUM,labels=nodes$code), target=factor(target,levels=nodes$LIBUM,labels=nodes$code)) %>% dplyr::filter(is.na(target)==FALSE) %>% dplyr::group_by(seq=paste0(source,"-",target)) %>% dplyr::summarise(source=first(source),target=first(target),lvalue1=n_distinct(norss)) %>% dplyr::select(source,target,lvalue1) -> links
-        forceNetwork(Links = links, Nodes = nodes, Source = "source", Target = "target", Value = "lvalue1", NodeID = "LIBUM", Group = "LIBPOLE", fontSize = 12, Nodesize = "nvalue1", opacity = 1, arrows=TRUE, zoom=TRUE, charge=-1000, bounded=FALSE, legend=TRUE)
+        
+        rum %>% 
+          dplyr::filter(ansor_sej==anno,as.numeric(moissor_sej)<=mese) -> temp0
+        
+        temp0 %>% 
+          dplyr::filter(norss%in%norss[LIBUM %in% unitemed]) -> temp1
+        
+        temp1 %>% 
+          dplyr::group_by(LIBUM) %>% 
+          dplyr::summarise(nvalue1=sum(dureesejpart)/10,HOPITAL=first(nofiness),LIBPOLE=first(pole)) %>% 
+          dplyr::filter(!duplicated(LIBUM),!is.na(LIBUM)) %>% dplyr::mutate(code=as.integer(row.names(.))-1) -> nodes
+        
+        temp1 %>% 
+          dplyr::select(norss,norum,LIBUM,nofiness,pole) %>% 
+          dplyr::arrange(norss,norum) %>% 
+          dplyr::mutate(source=LIBUM,target=ifelse(dplyr::lead(norss)==norss,dplyr::lead(LIBUM),NA)) %>% 
+          dplyr::mutate(source=factor(source, levels=nodes$LIBUM, labels=nodes$code), 
+                        target=factor(target,levels=nodes$LIBUM,labels=nodes$code)) %>% 
+          dplyr::filter(is.na(target)==FALSE) %>% 
+          dplyr::group_by(seq=paste0(source,"-",target)) %>% 
+          dplyr::summarise(source=first(source),target=first(target),lvalue1=n_distinct(norss)) %>% 
+          dplyr::select(source,target,lvalue1) -> links
+        
+        forceNetwork(Links = links, Nodes = nodes, 
+                     Source = "source", 
+                     Target = "target", 
+                     Value = "lvalue1", 
+                     NodeID = "LIBUM", 
+                     Group = "LIBPOLE", 
+                     fontSize = 12, 
+                     Nodesize = "nvalue1", 
+                     opacity = 1, 
+                     arrows=TRUE, 
+                     zoom=TRUE, 
+                     charge=-1000, 
+                     bounded=FALSE, 
+                     legend=TRUE)
       })
       
       output$parcours8 <- renderForceNetwork({
-        rum %>% dplyr::filter(ansor_sej==(anno-1),as.numeric(moissor_sej)<=mese) -> temp0
-        temp0 %>% dplyr::filter(norss%in%norss[LIBUM %in% unitemed]) -> temp1
-        temp1 %>% dplyr::group_by(LIBUM) %>% dplyr::summarise(nvalue1=sum(dureesejpart)/10,HOPITAL=first(nofiness),LIBPOLE=first(pole)) %>% dplyr::filter(!duplicated(LIBUM),!is.na(LIBUM)) %>% dplyr::mutate(code=as.numeric(row.names(.))-1) -> nodes
-        temp1 %>% dplyr::select(norss,norum,LIBUM,nofiness,pole) %>% dplyr::arrange(norss,norum) %>% dplyr::mutate(source=LIBUM,target=ifelse(lead(norss)==norss,lead(LIBUM),NA)) %>% dplyr::mutate(source=factor(source,levels=nodes$LIBUM,labels=nodes$code), target=factor(target,levels=nodes$LIBUM,labels=nodes$code)) %>% dplyr::filter(is.na(target)==FALSE) %>% dplyr::group_by(seq=paste0(source,"-",target)) %>% dplyr::summarise(source=first(source),target=first(target),lvalue1=n_distinct(norss)) %>% dplyr::select(source,target,lvalue1) -> links
-        forceNetwork(Links = links, Nodes = nodes, Source = "source", Target = "target", Value = "lvalue1", NodeID = "LIBUM", Group = "LIBPOLE", fontSize = 12, Nodesize = "nvalue1", opacity = 1, arrows=TRUE, zoom=TRUE, charge=-1000, bounded=FALSE, legend=TRUE)
+        
+        rum %>% 
+          dplyr::filter(ansor_sej==(anno-1),as.numeric(moissor_sej)<=mese) -> temp0
+        
+        temp0 %>% 
+          dplyr::filter(norss%in%norss[LIBUM %in% unitemed]) -> temp1
+        
+        temp1 %>% 
+          dplyr::group_by(LIBUM) %>% 
+          dplyr::summarise(nvalue1=sum(dureesejpart)/10,HOPITAL=first(nofiness),LIBPOLE=first(pole)) %>% 
+          dplyr::filter(!duplicated(LIBUM),!is.na(LIBUM)) %>% 
+          dplyr::mutate(code=as.numeric(row.names(.))-1) -> nodes
+        
+        temp1 %>% 
+          dplyr::select(norss,norum,LIBUM,nofiness,pole) %>% 
+          dplyr::arrange(norss,norum) %>% dplyr::mutate(source=LIBUM,target=ifelse(lead(norss)==norss,lead(LIBUM),NA)) %>%
+          dplyr::mutate(source=factor(source,levels=nodes$LIBUM,labels=nodes$code), 
+                        target=factor(target,levels=nodes$LIBUM,labels=nodes$code)) %>% 
+          dplyr::filter(is.na(target)==FALSE) %>% 
+          dplyr::group_by(seq=paste0(source,"-",target)) %>% 
+          dplyr::summarise(source=first(source),target=first(target),lvalue1=n_distinct(norss)) %>% 
+          dplyr::select(source,target,lvalue1) -> links
+        
+        forceNetwork(Links = links, 
+                     Nodes = nodes, 
+                     Source = "source", 
+                     Target = "target", 
+                     Value = "lvalue1", 
+                     NodeID = "LIBUM", 
+                     Group = "LIBPOLE", 
+                     fontSize = 12, 
+                     Nodesize = "nvalue1", 
+                     opacity = 1, 
+                     arrows=TRUE, 
+                     zoom=TRUE, 
+                     charge=-1000, 
+                     bounded=FALSE, 
+                     legend=TRUE)
+        
       })
+      
+      # DRAFT DE Graphiques de Sankey sur les flux entre unités
+      #
       # output$parcours9 <- renderSankeyNetwork({
       #   rum %>% dplyr::filter(ansor_sej==anno,as.numeric(moissor_sej)<=mese) -> temp0
       #   temp0 %>% dplyr::filter(norss%in%norss[LIBUM %in% unitemed]) -> temp1
@@ -1159,11 +1335,25 @@ function(input, output, session) {
       # })
       
       output$parcours11 <- renderPlotly({
+        
         # Ci-dessous pour graph à aires mensuel:
         # temp1 <- rum %>% dplyr::filter(ansor_sej>=anno-1, ! LIBUM %in% unitemed) %>% dplyr::mutate(temps=paste0(ansor_sej, " - M", moissor_sej)) %>% dplyr::group_by(autorisation=libelle_typeaut, temps) %>% dplyr::summarise(jours=sum(dureesejpart)) %>% ungroup()
         # plot_ly(data = temp1, x = ~temps, y = ~jours, type = 'scatter', mode='lines', color = ~autorisation) %>% layout(title="Nombre de journées dans les autres services par autorisation", xaxis = list(title = "Temps"), yaxis = list(title = "Journées"), showlegend = FALSE)
-        temp1 <- rum %>% dplyr::filter(ansor_sej>=anno-1, as.numeric(moissor_sej)<=mese, ! LIBUM %in% unitemed)  %>% dplyr::group_by(autorisation=libelle_typeaut, Annee=ansor_sej) %>% dplyr::summarise(jours=sum(dureesejpart)) %>% ungroup()
-        plot_ly(type = 'bar', orientation = 'h', data=temp1, x=~jours, y=~autorisation, color=~Annee) %>% layout(title=paste0("Nombre de journées dans les autres services selon le type d'autorisation à M", mese), xaxis = list(title = 'Nombre de journées'), yaxis = list(title = "Type d'autorisation", automargin=TRUE, tickangle=-15), barmode = 'group')
+        
+        temp1 <- 
+          rum %>% 
+          dplyr::filter(ansor_sej>=anno-1, as.numeric(moissor_sej)<=mese, ! LIBUM %in% unitemed)%>% 
+          dplyr::group_by(autorisation=libelle_typeaut, Annee=ansor_sej) %>% 
+          dplyr::summarise(jours=sum(dureesejpart)) %>% 
+          ungroup()
+        
+        plot_ly(type = 'bar', orientation = 'h', data=temp1, x=~jours, y=~autorisation, color=~Annee) %>% 
+          layout(title=paste0("Nombre de journées dans les autres services selon le type d'autorisation à M", mese), 
+                 xaxis = list(title = 'Nombre de journées'), 
+                 yaxis = list(title = "Type d'autorisation", 
+                              automargin=TRUE, 
+                              tickangle=-15), 
+                 barmode = 'group')
       })
       
     } 
@@ -1174,84 +1364,359 @@ function(input, output, session) {
     if(input$menuchoice=="anavalo") {
       
       output$anavalo01 <- renderDT({
-        rum %>% dplyr::filter(LIBUM %in% unitemed, as.numeric(ansor_sej) == anno | as.numeric(ansor_sej) == anno-1, as.numeric(moissor_sej) <= mese) %>% dplyr::group_by(Année=ansor_sej) %>% dplyr::summarise("Valorisation totale"=sum(round(valopmctmonotime1,1)), "Dont valorisation suppléments"=sum(round(rec_sup_repa,1)), "Valorisation totale tarifs ant."=sum(round(valopmctmonotime1_tarifsante,1)), "Nbr journées rums"=sum(dureesejpart), "Nbr journées séjours"=sum(duree_sej), "Nbr de rums"=length(nofiness))
-      }, caption="Valorisation des rums", rownames=FALSE, extensions = 'Buttons', filter = 'top', options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel')))
+        
+        rum %>% 
+          dplyr::filter(LIBUM %in% unitemed, 
+                        as.numeric(ansor_sej) == anno | as.numeric(ansor_sej) == anno-1, 
+                        as.numeric(moissor_sej) <= mese) %>% 
+          dplyr::group_by(Année=ansor_sej) %>% 
+          dplyr::summarise("Valorisation totale"=sum(round(valopmctmonotime1,1)), 
+                           "Dont valorisation suppléments"=sum(round(rec_sup_repa,1)), 
+                           "Valorisation totale tarifs ant."=sum(round(valopmctmonotime1_tarifsante,1)), 
+                           "Nbr journées rums"=sum(dureesejpart), 
+                           "Nbr journées séjours"=sum(duree_sej), 
+                           "Nbr de rums"=length(nofiness))
+      }, 
+      caption="Valorisation des rums", rownames=FALSE, 
+      extensions = 'Buttons', 
+      filter = 'top', 
+      options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel')))
       
       output$anavalo02 <- renderDT({
-        rum %>% dplyr::filter(LIBUM %in% unitemed, as.numeric(ansor_sej) == anno | as.numeric(ansor_sej) == anno-1, as.numeric(moissor_sej) <= mese) %>% dplyr::group_by(Année=ansor_sej, GHM=cdghm) %>% dplyr::summarise("Valorisation totale"=sum(round(valopmctmonotime1,1)), "Dont valorisation suppléments"=sum(round(rec_sup_repa,1)), "Valorisation totale tarifs ant."=sum(round(valopmctmonotime1_tarifsante,1)), "Nbr journées rums"=sum(dureesejpart), "Nbr journées séjours"=sum(duree_sej), "Nbr de rums"=length(nofiness))
-      }, caption="Valorisation des rums selon le GHM", rownames=FALSE, extensions = 'Buttons', filter = 'top', options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel')))
+        
+        rum %>% 
+          dplyr::filter(LIBUM %in% unitemed, 
+                        as.numeric(ansor_sej) == anno | as.numeric(ansor_sej) == anno-1, 
+                        as.numeric(moissor_sej) <= mese) %>% 
+          dplyr::group_by(Année=ansor_sej, GHM=cdghm) %>% 
+          dplyr::summarise("Valorisation totale"=sum(round(valopmctmonotime1,1)), 
+                           "Dont valorisation suppléments"=sum(round(rec_sup_repa,1)), 
+                           "Valorisation totale tarifs ant."=sum(round(valopmctmonotime1_tarifsante,1)), 
+                           "Nbr journées rums"=sum(dureesejpart), 
+                           "Nbr journées séjours"=sum(duree_sej), 
+                           "Nbr de rums"=length(nofiness))
+      }, 
+      caption="Valorisation des rums selon le GHM", 
+      rownames=FALSE, 
+      extensions = 'Buttons', 
+      filter = 'top', 
+      options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel')))
       
-      output$anavalo03 <- renderDT({
-        giac %>% dplyr::select(diff_rec, diff_rec_base, diff_rec_exbh, diff_rec_supp, diff_tarifsante, diff_consol, diff_theoriq, diff_reste, nracreel, nrac_consol) %>% dplyr::summarise_all(sum, na.rm=TRUE) %>% dplyr::mutate_at(vars(1:8), ~round(., 1)) %>% dplyr::rename("Differentiel rec. globale"=diff_rec, "Differentiel rec. base"=diff_rec_base, "Differentiel rec. bornes"=diff_rec_exbh, "Differentiel rec. suppléments"=diff_rec_supp, "Differentiel tarifs"=diff_tarifsante, "Consolidation à n-1"=diff_consol, "Rec. base théorique"=diff_theoriq, "Différentiel restant"=diff_reste, "Nbr de ghs"=nracreel, "Nbr de ghs année précédente"=nrac_consol)
-      }, caption="Differentiels de recettes sur 1 an", rownames=FALSE, extensions = 'Buttons', filter = 'top', options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel')))
+      #DRAFT DE Table et Graphique des recettes theoriques ventilées:
+      # 
+      # output$anavalo03 <- renderDT({
+      #   giac %>% dplyr::select(diff_rec, diff_rec_base, diff_rec_exbh, diff_rec_supp, diff_tarifsante, diff_consol, diff_theoriq, diff_reste, nracreel, nrac_consol) %>% dplyr::summarise_all(sum, na.rm=TRUE) %>% dplyr::mutate_at(vars(1:8), ~round(., 1)) %>% dplyr::rename("Differentiel rec. globale"=diff_rec, "Differentiel rec. base"=diff_rec_base, "Differentiel rec. bornes"=diff_rec_exbh, "Differentiel rec. suppléments"=diff_rec_supp, "Differentiel tarifs"=diff_tarifsante, "Consolidation à n-1"=diff_consol, "Rec. base théorique"=diff_theoriq, "Différentiel restant"=diff_reste, "Nbr de ghs"=nracreel, "Nbr de ghs année précédente"=nrac_consol)
+      # }, caption="Differentiels de recettes sur 1 an", rownames=FALSE, extensions = 'Buttons', filter = 'top', options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel')))
+      # 
+      # temp1 <- giac %>% dplyr::group_by(cmd=substr(racine, 1, 2)) %>% dplyr::summarise(recrac=sum(recrac, na.rm=TRUE), recrac_exbh=sum(recrac_exbh, na.rm=TRUE), recracsup=sum(recracsup, na.rm=TRUE), diff_tarifsante=sum(diff_tarifsante, na.rm=TRUE), theoriq_num=sum(theoriq_num, na.rm=TRUE), recrac_consol=sum(recrac_consol, na.rm=TRUE), recrac_exbh_consol=sum(recrac_exbh_consol, na.rm=TRUE), recracsup_consol=sum(recracsup_consol, na.rm=TRUE), evol_consol=sum(evol_consol, na.rm=TRUE), nrac=sum(nracreel, na.rm=TRUE), nrac_consol=sum(nrac_consol, na.rm=TRUE))
+      # 
+      # output$anavalo0 <- renderPlotly({
+      #   plotly::plot_ly(data=temp1) %>%
+      #     plotly::add_trace(x = ~recrac, y = ~cmd, name = 'recettes base', type = 'bar', orientation = 'h',  bar = list(color = "blue")) %>%
+      #     plotly::add_trace(x = ~recrac_exbh, y = ~cmd, name = 'recettes bornes', type = 'bar', orientation = 'h',  bar = list(color = "blue")) %>%
+      #     plotly::add_trace(x = ~recracsup, y = ~cmd, name = 'recettes suppléments', type = 'bar', orientation = 'h',  bar = list(color = "blue")) %>%
+      #     plotly::add_trace(x = ~diff_tarifsante, y = ~cmd, name = 'effet tarifs', type = 'bar', orientation = 'h', bar = list(color = "blue")) %>%
+      #     plotly::add_trace(x = ~theoriq_num, y = ~cmd, xaxis="x", name = 'recettes théorique (% sev./rac. année préc.)', type = 'bar', orientation = 'h', bar = list(color = "red")) %>%
+      #     plotly::add_trace(x = ~recrac_consol, y = ~cmd, name = 'recettes base n-1', type = 'bar', orientation = 'h',  bar = list(color = "green")) %>%
+      #     plotly::add_trace(x = ~recrac_exbh_consol, y = ~cmd, name = 'recettes bornes n-1', type = 'bar', orientation = 'h',  bar = list(color = "green")) %>%
+      #     plotly::add_trace(x = ~recracsup_consol, y = ~cmd, name = 'recettes suppléments n-1', type = 'bar', orientation = 'h', bar = list(color = "green")) %>%
+      #     plotly::add_trace(x = ~evol_consol, y = ~cmd, name = 'consolidation totale n-1', type = 'bar', orientation = 'h', bar = list(color = "green")) %>%
+      #     plotly::add_trace(type = 'scatter', mode = 'lines+markers', x=~nrac, y=~cmd, xaxis="x2", name="activité", line = list(color = "orange")) %>%
+      #     plotly::add_trace(type = 'scatter', mode = 'lines+markers', x=~nrac_consol, y=~cmd, xaxis="x2", name="activité n-1", line = list(color = "yellow")) %>%
+      #     plotly::layout(xaxis = list(tickfont = list(color = "blue"),  side = "bottom", anchor = "y", title = "recettes (€)"), xaxis2 = list(tickfont = list(color = "black"), overlaying = "x", side = "top", anchor = "y", title = "activité (nbr de séjours)"))
+      # })
       
-      temp1 <- giac %>% dplyr::group_by(cmd=substr(racine, 1, 2)) %>% dplyr::summarise(recrac=sum(recrac, na.rm=TRUE), recrac_exbh=sum(recrac_exbh, na.rm=TRUE), recracsup=sum(recracsup, na.rm=TRUE), diff_tarifsante=sum(diff_tarifsante, na.rm=TRUE), theoriq_num=sum(theoriq_num, na.rm=TRUE), recrac_consol=sum(recrac_consol, na.rm=TRUE), recrac_exbh_consol=sum(recrac_exbh_consol, na.rm=TRUE), recracsup_consol=sum(recracsup_consol, na.rm=TRUE), evol_consol=sum(evol_consol, na.rm=TRUE), nrac=sum(nracreel, na.rm=TRUE), nrac_consol=sum(nrac_consol, na.rm=TRUE))
-      
-      output$anavalo0 <- renderPlotly({
-        plotly::plot_ly(data=temp1) %>%
-          plotly::add_trace(x = ~recrac, y = ~cmd, name = 'recettes base', type = 'bar', orientation = 'h',  bar = list(color = "blue")) %>%
-          plotly::add_trace(x = ~recrac_exbh, y = ~cmd, name = 'recettes bornes', type = 'bar', orientation = 'h',  bar = list(color = "blue")) %>%
-          plotly::add_trace(x = ~recracsup, y = ~cmd, name = 'recettes suppléments', type = 'bar', orientation = 'h',  bar = list(color = "blue")) %>%
-          plotly::add_trace(x = ~diff_tarifsante, y = ~cmd, name = 'effet tarifs', type = 'bar', orientation = 'h', bar = list(color = "blue")) %>%
-          plotly::add_trace(x = ~theoriq_num, y = ~cmd, xaxis="x", name = 'recettes théorique (% sev./rac. année préc.)', type = 'bar', orientation = 'h', bar = list(color = "red")) %>%
-          plotly::add_trace(x = ~recrac_consol, y = ~cmd, name = 'recettes base n-1', type = 'bar', orientation = 'h',  bar = list(color = "green")) %>%
-          plotly::add_trace(x = ~recrac_exbh_consol, y = ~cmd, name = 'recettes bornes n-1', type = 'bar', orientation = 'h',  bar = list(color = "green")) %>%
-          plotly::add_trace(x = ~recracsup_consol, y = ~cmd, name = 'recettes suppléments n-1', type = 'bar', orientation = 'h', bar = list(color = "green")) %>%
-          plotly::add_trace(x = ~evol_consol, y = ~cmd, name = 'consolidation totale n-1', type = 'bar', orientation = 'h', bar = list(color = "green")) %>%
-          plotly::add_trace(type = 'scatter', mode = 'lines+markers', x=~nrac, y=~cmd, xaxis="x2", name="activité", line = list(color = "orange")) %>%
-          plotly::add_trace(type = 'scatter', mode = 'lines+markers', x=~nrac_consol, y=~cmd, xaxis="x2", name="activité n-1", line = list(color = "yellow")) %>%
-          plotly::layout(xaxis = list(tickfont = list(color = "blue"),  side = "bottom", anchor = "y", title = "recettes (€)"), xaxis2 = list(tickfont = list(color = "black"), overlaying = "x", side = "top", anchor = "y", title = "activité (nbr de séjours)"))
-      })
-      
-      anavalograph <- rum %>% dplyr::filter(LIBUM %in% unitemed, as.numeric(ansor_sej) == anno | as.numeric(ansor_sej) == anno-1, as.numeric(moissor_sej) <= mese) %>% dplyr::group_by(sum_valo=substr(cdghm,3,3)) %>% dplyr::mutate(année=as.factor(ansor_sej)) %>% dplyr::select(norss, cdghm, dureesejpart, LIBUM, année, valotime:valopmctmonotime2, nbrum_sej, libelle_racine_sej, libelle_da_sej, libelle_ga_sej)
+      anavalograph <- 
+        rum %>% 
+        dplyr::filter(LIBUM %in% unitemed, 
+                      as.numeric(ansor_sej) == anno | as.numeric(ansor_sej) == anno-1, 
+                      as.numeric(moissor_sej) <= mese) %>% 
+        dplyr::group_by(sum_valo=substr(cdghm,3,3)) %>% 
+        dplyr::mutate(année=as.factor(ansor_sej)) %>% 
+        dplyr::select(
+          norss,
+          cdghm,
+          dureesejpart,
+          LIBUM,
+          année,
+          valotime:valopmctmonotime2,
+          nbrum_sej,
+          libelle_racine_sej,
+          libelle_da_sej,
+          libelle_ga_sej
+        )
       
       output$anavalo1 <- renderPlotly({
-        ggplotly( ggplot(anavalograph, aes(x=substr(cdghm,3,3), y=valopmctmonotime1, fill=année)) + geom_boxplot() + geom_point(aes(x=substr(cdghm,3,3), y=valopmctmonotime1/100), stat = "summary", fun.y=sum, show.legend=TRUE, position=position_dodge(width=0.75), size=4, shape=8) + scale_y_continuous(name = "Valorisation des rums (€)", sec.axis = sec_axis(~./100, name="Somme de la Valorisation / 100 (€)")) + labs(x = "Type de GHM") ) %>% layout(boxmode = "group")
-      })
+        
+        ggplotly(
+          ggplot(anavalograph, aes(
+            x = substr(cdghm, 3, 3),
+            y = valopmctmonotime1,
+            fill = année
+          )) + geom_boxplot() + geom_point(
+            aes(x = substr(cdghm, 3, 3), y = valopmctmonotime1 / 100),
+            stat = "summary",
+            fun.y = sum,
+            show.legend = TRUE,
+            position = position_dodge(width = 0.75),
+            size = 4,
+            shape = 8
+          ) + scale_y_continuous(
+            name = "Valorisation des rums (€)",
+            sec.axis = sec_axis( ~ . / 100, name = "Somme de la Valorisation / 100 (€)")
+          ) + labs(x = "Type de GHM")
+        ) %>% layout(boxmode = "group")
+        
+        })
+      
       output$anavalo2 <- renderPlotly({
-        ggplotly( ggplot(anavalograph, aes(x=substr(cdghm,6,6), y=valopmctmonotime1, fill=année)) + geom_boxplot() + geom_point(aes(x=substr(cdghm,6,6), y=valopmctmonotime1/100), stat = "summary", fun.y=sum, show.legend=TRUE, position=position_dodge(width=0.75), size=4, shape=8) + scale_y_continuous(name = "Valorisation des rums (€)", sec.axis = sec_axis(~./100, name="Somme de la Valorisation / 100 (€)")) + labs(x = "Type de GHM") ) %>% layout(boxmode = "group")
+      
+        ggplotly(
+          ggplot(anavalograph, aes(
+            x = substr(cdghm, 6, 6),
+            y = valopmctmonotime1,
+            fill = année
+          )) + geom_boxplot() + geom_point(
+            aes(x = substr(cdghm, 6, 6), y = valopmctmonotime1 / 100),
+            stat = "summary",
+            fun.y = sum,
+            show.legend = TRUE,
+            position = position_dodge(width = 0.75),
+            size = 4,
+            shape = 8
+          ) + scale_y_continuous(
+            name = "Valorisation des rums (€)",
+            sec.axis = sec_axis( ~ . / 100, name = "Somme de la Valorisation / 100 (€)")
+          ) + labs(x = "Type de GHM")
+        ) %>% layout(boxmode = "group")
       })
+      
       output$anavalo3 <- renderPlotly({
-        ggplotly( ggplot(anavalograph, aes(x=substr(cdghm,1,2), y=valopmctmonotime1, fill=année)) + geom_boxplot() + geom_point(aes(x=substr(cdghm,1,2), y=valopmctmonotime1/100), stat = "summary", fun.y=sum, show.legend=TRUE, position=position_dodge(width=0.75), size=4, shape=8) + scale_y_continuous(name = "Valorisation des séjours (€)", sec.axis = sec_axis(~./100, name="Somme de la Valorisation / 100 (€)")) + labs(x = "Type de GHM") ) %>% layout(boxmode = "group")
+      
+        ggplotly(
+          ggplot(anavalograph, aes(
+            x = substr(cdghm, 1, 2),
+            y = valopmctmonotime1,
+            fill = année
+          )) + geom_boxplot() + geom_point(
+            aes(x = substr(cdghm, 1, 2), y = valopmctmonotime1 / 100),
+            stat = "summary",
+            fun.y = sum,
+            show.legend = TRUE,
+            position = position_dodge(width = 0.75),
+            size = 4,
+            shape = 8
+          ) + scale_y_continuous(
+            name = "Valorisation des séjours (€)",
+            sec.axis = sec_axis( ~ . / 100, name = "Somme de la Valorisation / 100 (€)")
+          ) + labs(x = "Type de GHM")
+        ) %>% layout(boxmode = "group")
       })
+      
       output$anavalo4 <- renderPlotly({
-        ggplotly( ggplot(anavalograph, aes(x=libelle_da_sej, y=valopmctmonotime1, fill=année)) + theme(axis.text.x = element_text(angle = 66)) + geom_boxplot() + geom_point(aes(x=libelle_da_sej, y=valopmctmonotime1/100), stat = "summary", fun.y=sum, show.legend=TRUE, position=position_dodge(width=0.75), size=4, shape=8) + scale_y_continuous(name = "Valorisation des séjours (€)", sec.axis = sec_axis(~./100, name="Somme de la Valorisation / 100 (€)")) + labs(x = "Domaine d'activité") ) %>% layout(boxmode = "group")
+      
+        ggplotly(
+          ggplot(
+            anavalograph,
+            aes(x = libelle_da_sej, y = valopmctmonotime1, fill = année)
+          ) + theme(axis.text.x = element_text(angle = 66)) + geom_boxplot() + geom_point(
+            aes(x = libelle_da_sej, y = valopmctmonotime1 / 100),
+            stat = "summary",
+            fun.y = sum,
+            show.legend = TRUE,
+            position = position_dodge(width = 0.75),
+            size = 4,
+            shape = 8
+          ) + scale_y_continuous(
+            name = "Valorisation des séjours (€)",
+            sec.axis = sec_axis( ~ . / 100, name = "Somme de la Valorisation / 100 (€)")
+          ) + labs(x = "Domaine d'activité")
+        ) %>% layout(boxmode = "group")
       })
+      
       output$anavalo5 <- renderPlotly({
-        radact <- rum %>% dplyr::filter(LIBUM %in% unitemed, as.numeric(ansor_sej) >= anno-1, as.numeric(moissor_sej) <= mese) %>% dplyr::select(nas, LIBUM, ansor_sej, dureesejpart, duree_sej, norum, nbrum_sej, cdghm, valopmctmonotime1) %>% dplyr::group_by(annee=factor(ansor_sej), type=factor(substr(cdghm,3,3)), .drop=FALSE) %>%  dplyr::summarise(activ=n(), valo=sum(valopmctmonotime1))
-        p1 <- plot_ly(type = 'bar', orientation = 'h', data=radact, x=~activ, y=~type, color=~annee) %>% layout(title='test1', xaxis = list(title = 'Nombre de passages'), yaxis = list(title = 'Type'), barmode = 'group')
-        p2 <- plot_ly(type = 'scatter', mode = 'lines+markers', data=radact, x=~valo, y=~type, color=~annee) 
-        subplot(p1, p2) %>% layout(title='Activité (rums) et valorisation (€)')
+      
+        radact <- 
+          rum %>% 
+          dplyr::filter(LIBUM %in% unitemed, 
+                        as.numeric(ansor_sej) >= anno-1, 
+                        as.numeric(moissor_sej) <= mese) %>% 
+          dplyr::select(nas, LIBUM, ansor_sej, dureesejpart, duree_sej, norum, nbrum_sej, cdghm, valopmctmonotime1) %>% 
+          dplyr::group_by(annee=factor(ansor_sej), type=factor(substr(cdghm,3,3)), .drop=FALSE) %>% 
+          dplyr::summarise(activ=n(), valo=sum(valopmctmonotime1))
+        
+        p1 <- 
+          plot_ly(type = 'bar', orientation = 'h', data=radact, x=~activ, y=~type, color=~annee) %>% 
+          layout(title='test1', xaxis = list(title = 'Nombre de passages'), yaxis = list(title = 'Type'), barmode = 'group')
+        
+        p2 <- 
+          plot_ly(type = 'scatter', mode = 'lines+markers', data=radact, x=~valo, y=~type, color=~annee) 
+        
+        subplot(p1, p2) %>% 
+          layout(title='Activité (rums) et valorisation (€)')
+        
       })
+      
       output$anavalo6 <- renderPlotly({
-        radact <- rum %>% dplyr::filter(LIBUM %in% unitemed, as.numeric(ansor_sej) >= anno-1, as.numeric(moissor_sej) <= mese) %>% dplyr::select(nas, LIBUM, ansor_sej, dureesejpart, duree_sej, norum, nbrum_sej, cdghm, valopmctmonotime1) %>% dplyr::group_by(annee=factor(ansor_sej), severite=factor(substr(cdghm,6,6)), .drop=FALSE) %>%  dplyr::summarise(activ=n(), valo=sum(valopmctmonotime1))
-        p1 <- plot_ly(type = 'bar', orientation = 'h', data=radact, x=~activ, y=~severite, color=~annee) %>% layout(title='test1', xaxis = list(title = 'Nombre de passages'), yaxis = list(title = 'Severite'), barmode = 'group')
-        p2 <- plot_ly(type = 'scatter', mode = 'lines+markers', data=radact, x=~valo, y=~severite, color=~annee) 
+      
+        radact <- 
+          rum %>% 
+          dplyr::filter(LIBUM %in% unitemed, 
+                                as.numeric(ansor_sej) >= anno-1, 
+                        as.numeric(moissor_sej) <= mese) %>% 
+          dplyr::select(nas, LIBUM, ansor_sej, dureesejpart, duree_sej, norum, nbrum_sej, cdghm, valopmctmonotime1) %>% 
+          dplyr::group_by(annee=factor(ansor_sej), severite=factor(substr(cdghm,6,6)), .drop=FALSE) %>% 
+          dplyr::summarise(activ=n(), valo=sum(valopmctmonotime1))
+        
+        p1 <- 
+          plot_ly(type = 'bar', orientation = 'h', data=radact, x=~activ, y=~severite, color=~annee) %>% 
+          layout(title='test1', xaxis = list(title = 'Nombre de passages'), yaxis = list(title = 'Severite'), barmode = 'group')
+        
+        p2 <- 
+          plot_ly(type = 'scatter', mode = 'lines+markers', data=radact, x=~valo, y=~severite, color=~annee) 
+        
         subplot(p1, p2) %>% layout(title='Activité (rums) et valorisation (€)')
+        
       })
+      
       output$anavalo7 <- renderPlotly({
-        radact <- rum %>% dplyr::filter(LIBUM %in% unitemed, as.numeric(ansor_sej) >= anno-1, as.numeric(moissor_sej) <= mese) %>% dplyr::select(nas, LIBUM, ansor_sej, dureesejpart, duree_sej, norum, nbrum_sej, cdghm, valopmctmonotime1, libelle_da_sej, libelle_ga_sej) %>% dplyr::group_by(annee=factor(ansor_sej), da=factor(libelle_da_sej), .drop=FALSE) %>%  dplyr::summarise(activ=n(), valo=sum(valopmctmonotime1))
-        p1 <- plot_ly(type = 'bar', orientation = 'h', data=radact, x=~activ, y=~da, color=~annee) %>% layout(title='test1', xaxis = list(title = 'Nombre de passages'), yaxis = list(title = 'Dom. activité'), barmode = 'group')
-        p2 <- plot_ly(type = 'scatter', mode = 'lines+markers', data=radact, x=~valo, y=~da, color=~annee) 
+        
+        radact <- 
+          rum %>% 
+          dplyr::filter(LIBUM %in% unitemed, 
+                                as.numeric(ansor_sej) >= anno-1, 
+                                as.numeric(moissor_sej) <= mese) %>% 
+          dplyr::select(nas, LIBUM, ansor_sej, dureesejpart, duree_sej, norum, nbrum_sej, cdghm, valopmctmonotime1, libelle_da_sej, libelle_ga_sej) %>% 
+          dplyr::group_by(annee=factor(ansor_sej), da=factor(libelle_da_sej), .drop=FALSE) %>%
+          dplyr::summarise(activ=n(), valo=sum(valopmctmonotime1))
+        
+        p1 <- 
+          plot_ly(type = 'bar', orientation = 'h', data=radact, x=~activ, y=~da, color=~annee) %>% 
+          layout(title='test1', xaxis = list(title = 'Nombre de passages'), yaxis = list(title = 'Dom. activité'), barmode = 'group')
+        
+        p2 <- 
+          plot_ly(type = 'scatter', mode = 'lines+markers', data=radact, x=~valo, y=~da, color=~annee) 
+        
         subplot(p1, p2, shareY=TRUE) %>% layout(title='Activité (rums) et valorisation (€)')
+        
       })
+      
       output$anavalo8 <- renderPlotly({
-        radact <- rum %>% dplyr::filter(LIBUM %in% unitemed, as.numeric(ansor_sej) >= anno-1, as.numeric(moissor_sej) <= mese) %>% dplyr::select(nas, LIBUM, ansor_sej, dureesejpart, duree_sej, norum, nbrum_sej, cdghm, valopmctmonotime1) %>% dplyr::group_by(annee=factor(ansor_sej), cmd=factor(substr(cdghm,1,2)), .drop=FALSE) %>%  dplyr::summarise(activ=n(), valo=sum(valopmctmonotime1))
-        p1 <- plot_ly(type = 'bar', orientation = 'h', data=radact, x=~activ, y=~cmd, color=~annee) %>% layout(title='test1', xaxis = list(title = 'Nombre de passages'), yaxis = list(title = 'Severite'), barmode = 'group')
-        p2 <- plot_ly(type = 'scatter', mode = 'lines+markers', data=radact, x=~valo, y=~cmd, color=~annee) 
+        
+        radact <- 
+          rum %>% 
+          dplyr::filter(LIBUM %in% unitemed, 
+                        as.numeric(ansor_sej) >= anno-1, 
+                        as.numeric(moissor_sej) <= mese) %>% 
+          dplyr::select(nas, LIBUM, ansor_sej, dureesejpart, duree_sej, norum, nbrum_sej, cdghm, valopmctmonotime1) %>% 
+          dplyr::group_by(annee=factor(ansor_sej), cmd=factor(substr(cdghm,1,2)), .drop=FALSE) %>%
+          dplyr::summarise(activ=n(), valo=sum(valopmctmonotime1))
+        
+        p1 <- 
+          plot_ly(type = 'bar', orientation = 'h', data=radact, x=~activ, y=~cmd, color=~annee) %>% 
+          layout(title='test1', xaxis = list(title = 'Nombre de passages'), yaxis = list(title = 'Severite'), barmode = 'group')
+        
+        p2 <- 
+          plot_ly(type = 'scatter', mode = 'lines+markers', data=radact, x=~valo, y=~cmd, color=~annee) 
+        
         subplot(p1, p2) %>% layout(title='Activité (rums) et valorisation (€)')
+        
       })
       
-      pc <- rum %>% dplyr::filter(LIBUM %in% unitemed, as.numeric(ansor_sej) == anno | as.numeric(ansor_sej) == anno-1, as.numeric(moissor_sej) <= mese) %>% dplyr::mutate(cmd=substr(cdghm,1,2), sortie=ifelse(mdsoue==0, 0, as.integer(mdsoue)-5), entree=ifelse(mdeeue==0, 0, as.integer(mdeeue)-5), severite=ifelse(is.na(as.numeric(substr(cdghm,6,6))),0,substr(cdghm,6,6)), age=as.numeric(d8soue-dtnais)/365.25, typeghm=ifelse(substr(cdghm,3,3)=="C",1,ifelse(substr(cdghm,3,3)=="K", 2, ifelse(substr(cdghm,3,3)=="M", 3, ifelse(substr(cdghm,3,3)=="Z", 4, 5))))) %>%  dplyr::mutate_if(is.character, as.numeric) %>% dplyr::select(dmr=dureesejpart, annee=ansor_sej, nbrum_sej, sexe=sxpmsi, entree, sortie, cmd, nbacte, nbdas, severite, age, typeghm, duree_sej, valo=valopmctmonotime1, supplements=rec_sup_repa)
-      datapca1 <- prcomp(na.omit(pc[ , apply(pc, 2, var) != 0]), center = TRUE, scale = TRUE)
-      # summary(datapca1)
+      pc <- 
+        rum %>% 
+        dplyr::filter(LIBUM %in% unitemed, 
+                      as.numeric(ansor_sej) == anno | as.numeric(ansor_sej) == anno-1, 
+                      as.numeric(moissor_sej) <= mese) %>% 
+        dplyr::mutate(
+          cmd = substr(cdghm, 1, 2),
+          sortie = ifelse(mdsoue == 0, 0, as.integer(mdsoue) - 5),
+          entree = ifelse(mdeeue == 0, 0, as.integer(mdeeue) - 5),
+          severite = ifelse(is.na(as.numeric(substr(
+            cdghm, 6, 6
+          ))), 0, substr(cdghm, 6, 6)),
+          age = as.numeric(d8soue - dtnais) / 365.25,
+          typeghm = ifelse(substr(cdghm, 3, 3) == "C", 1, ifelse(
+            substr(cdghm, 3, 3) == "K", 2, ifelse(substr(cdghm, 3, 3) == "M", 3, ifelse(substr(cdghm, 3, 3) == "Z", 4, 5))
+          ))
+        ) %>%  dplyr::mutate_if(is.character, as.numeric) %>% dplyr::select(
+          dmr = dureesejpart,
+          annee = ansor_sej,
+          nbrum_sej,
+          sexe = sxpmsi,
+          entree,
+          sortie,
+          cmd,
+          nbacte,
+          nbdas,
+          severite,
+          age,
+          typeghm,
+          duree_sej,
+          valo = valopmctmonotime1,
+          supplements = rec_sup_repa
+        )
       
+      datapca1 <- 
+        prcomp(na.omit(pc[ , apply(pc, 2, var) != 0]), center = TRUE, scale = TRUE)
+
       output$anavalo9 <- renderPlotly({
-        ggplotly(ggbiplot(pcobj = datapca1, obs.scale=1, scale = 1, alpha = 0, varname.size = 5, varname.adjust = TRUE, ellipse = TRUE) + geom_point(aes(color=pc$annee, text=paste("cmd: ",pc$cmd, '</br>dmr: ', pc$dmr, '</br>nbrum: ', pc$nbrum_sej, '</br>valo: ', round(pc$valo,1))), show.legend = FALSE)) %>% layout(titlefont=list(size=22))
+        
+        ggplotly(
+          ggbiplot(
+            pcobj = datapca1,
+            obs.scale = 1,
+            scale = 1,
+            alpha = 0,
+            varname.size = 5,
+            varname.adjust = TRUE,
+            ellipse = TRUE
+          ) + geom_point(aes(
+            color = pc$annee,
+            text = paste(
+              "cmd: ",
+              pc$cmd,
+              '</br>dmr: ',
+              pc$dmr,
+              '</br>nbrum: ',
+              pc$nbrum_sej,
+              '</br>valo: ',
+              round(pc$valo, 1)
+            )
+          ), show.legend = FALSE)
+        ) %>% layout(titlefont = list(size = 22))
+        
       })
+      
       output$anavalo10 <- renderPlotly({
-        ggplotly(ggbiplot(pcobj = datapca1, choices=c(3,4), obs.scale=1, scale = 1, alpha = 0, varname.size = 5, varname.adjust = TRUE, ellipse = TRUE) + geom_point(aes(color=pc$annee, text=paste("cmd: ",pc$cmd, '</br>dmr: ', pc$dmr, '</br>nbrum: ', pc$nbrum_sej, '</br>valo: ', round(pc$valo,1))), show.legend = FALSE)) %>% layout(titlefont=list(size=22))
-      })
+        
+        ggplotly(
+          ggbiplot(
+            pcobj = datapca1,
+            choices = c(3, 4),
+            obs.scale = 1,
+            scale = 1,
+            alpha = 0,
+            varname.size = 5,
+            varname.adjust = TRUE,
+            ellipse = TRUE
+          ) + geom_point(aes(
+            color = pc$annee,
+            text = paste(
+              "cmd: ",
+              pc$cmd,
+              '</br>dmr: ',
+              pc$dmr,
+              '</br>nbrum: ',
+              pc$nbrum_sej,
+              '</br>valo: ',
+              round(pc$valo, 1)
+            )
+          ), show.legend = FALSE)
+        ) %>% layout(titlefont = list(size = 22))
+        
+        })
+      
     } 
   })
   
