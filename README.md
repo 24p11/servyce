@@ -3,7 +3,8 @@
 
 ## Input:
 
-- données au format Rdata préparées au préalable avec l'interface shiny "imports" (pour obtenir un Ddata avec la ventilation de la valorisation notamment)
+- données au format Rdata préparées au préalable par le package dimRactivité, qui permet entre autre de valoriser au rum les données de remontée PMSI chargées avec le package pmeasyr.
+- les donnée utilisées par l'application shiny sont à renseigner via 3 parametres dans le fichier global.R
 
 
 ## Output:
@@ -20,16 +21,10 @@
 
 ## Reste à faire:
 
-- dernier graphique des flux de patient à mettre en place (journées selon type d'autorisation) à faire par regroupement et non par urm
-- refaire le calcul du gisement en calculant la recette theorique ainsi: propghS_giac*nbr_ghS*tarif_ghS (tarifs année n) pour produire un tableau avec 1) difference due aux tarifs, 2) difference avec la recette theorique, et 3) le reste <=> effet casemix (cad hors tarifs et hors variation de niveaux par racine). Produire aussi une table avec effet tarifs et recette theorique par racine.
-- changer referime en nomensland pour accès externe
-- 2eme et 3eme sunburst à mettre par regroupement comme le 1er
-- verifier les top GHM des parcours 
+- refaire le calcul des recettes théoriques
 - graphique d'evolution mensuelle des DMS
 - mettre un progress pour chaque page
 - ne pas recalculer les pages à chaque click
-- changer la skin
-- premier parcours ne respecte pas les couleurs
 - empecher erreur quand click avant chargement des données
 - effacer les objets en sortant: session$onSessionEnded({}) ou: onStop(function() {}) ?
 
