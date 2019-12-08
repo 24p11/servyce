@@ -176,8 +176,8 @@ function(input, output, session) {
       
       updateSelectizeInput(session, 'uma', choices = structures, server = TRUE)
       
-      dir.create(paste0(datapath, "temp/"), showWarnings = FALSE)
-      save(anno, mese, anonconsol, mnonconsol, pmctmono, diagnostics, rsaload, rumload, structures, tarifs, score, file = paste0(datapath, "temp/servyce", anno, "M", mese, ".Rdata"))
+      dir.create(paste0(temppath, "temp/"), showWarnings = FALSE)
+      save(anno, mese, anonconsol, mnonconsol, pmctmono, diagnostics, rsaload, rumload, structures, tarifs, score, file = paste0(temppath, "temp/servyce", anno, "M", mese, ".Rdata"))
       
     } )
   } )
@@ -198,8 +198,8 @@ function(input, output, session) {
       mnonconsol <<- mese
       
       incProgress(0.1, detail = paste("données préconstruites")) 
-      dir.create(paste0(datapath, "temp/"), showWarnings = FALSE)
-      load(paste0(datapath, "temp/servyce", anno, "M", mese, ".Rdata")) 
+      dir.create(paste0(temppath, "temp/"), showWarnings = FALSE)
+      load(paste0(temppath, "temp/servyce", anno, "M", mese, ".Rdata")) 
       incProgress(0.7, detail = paste("création des variables")) 
       
       rumload <<- rumload 
@@ -243,8 +243,8 @@ function(input, output, session) {
         
         score <<- 1
         
-        dir.create(paste0(datapath, "temp/"), showWarnings = FALSE)
-        save(anno, mese, anonconsol, mnonconsol, pmctmono, diagnostics, rsaload, rumload, structures, tarifs, score, file = paste0(datapath, "temp/servyce", anno, "M", mese, ".Rdata"))
+        dir.create(paste0(temppath, "temp/"), showWarnings = FALSE)
+        save(anno, mese, anonconsol, mnonconsol, pmctmono, diagnostics, rsaload, rumload, structures, tarifs, score, file = paste0(temppath, "temp/servyce", anno, "M", mese, ".Rdata"))
         
       } else {NULL}
     })

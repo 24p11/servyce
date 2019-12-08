@@ -23,5 +23,7 @@ strctr <<- "/mnt/commons/Groupe_de_travail/GH_PMSI/INFORMATIQUE/GIT/remi/tableau
 
 #renseigner ici le path aux données de remontée (fichiers .Rdata) produites par dimRactivité
 datapath <<- "/mnt/commons/Groupe_de_travail/GH_PMSI/DATA/GENRSA/"
+# temppath <<- "./"
+temppath <<- "/mnt/commons/Groupe_de_travail/GH_PMSI/DATA/GENRSA/"
 
 
